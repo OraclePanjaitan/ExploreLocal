@@ -21,4 +21,5 @@ class SharedPreferenceHelper(private val context:Context) {
         val sharedPreferencesHelper = context.getSharedPreferences(MY_PREF_KEY,Context.MODE_PRIVATE)
         sharedPreferencesHelper.edit().clear().apply()
     }
+
 }
