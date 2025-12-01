@@ -1,39 +1,39 @@
 package com.example.explorelocal.ui.screen.auth
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.collectAsState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.explorelocal.data.model.UserState
-import kotlinx.coroutines.time.delay
-import androidx.compose.runtime.collectAsState
+import com.example.explorelocal.navigation.AppNavigation
+import com.example.explorelocal.ui.theme.PrimaryPurple
 import com.example.explorelocal.viewmodel.AuthViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun LoginScreen(
@@ -45,6 +45,7 @@ fun LoginScreen(
 
     var userEmail by remember { mutableStateOf("") }
     var userPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
     // Observe state changes
@@ -62,77 +63,244 @@ fun LoginScreen(
         }
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(Color.White)
     ) {
-        Text(
-            text = "Login",
-            style = MaterialTheme.typography.headlineMedium
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        OutlinedTextField(
-            value = userEmail,
-            onValueChange = { userEmail = it },
-            label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = userPassword,
-            onValueChange = { userPassword = it },
-            label = { Text("Password") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            onClick = {
-                viewModel.login(context, userEmail, userPassword)
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = userEmail.isNotEmpty() && userPassword.isNotEmpty()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.Start
         ) {
-            Text("Login")
-        }
+            Spacer(modifier = Modifier.height(60.dp))
 
-        Spacer(modifier = Modifier.height(8.dp))
+            // Title "Masuk"
+            Text(
+                text = "Masuk",
+                fontSize = 40.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
 
-        TextButton(
-            onClick = { navController.navigate("register") }
-        ) {
-            Text("Belum punya akun? Daftar")
-        }
+            Spacer(modifier = Modifier.height(40.dp))
 
-        // Show loading or error
-        when(userState) {
-            is UserState.Loading -> {
-                Spacer(modifier = Modifier.height(16.dp))
-                CircularProgressIndicator()
-            }
-            is UserState.Error -> {
-                if(errorMessage.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(16.dp))
+            // Email Label
+            Text(
+                text = "Email",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.Black
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Email TextField
+            OutlinedTextField(
+                value = userEmail,
+                onValueChange = { userEmail = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = {
                     Text(
-                        text = errorMessage,
-                        color = MaterialTheme.colorScheme.error
+                        text = "example@gmail.com",
+                        color = Color.Gray
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Email,
+                        contentDescription = "Email Icon",
+                        tint = Color.Gray
+                    )
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = PrimaryPurple,
+                    unfocusedBorderColor = Color(0xFFE0E0E0),
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Password Label
+            Text(
+                text = "Kata Sandi",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.Black
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Password TextField
+            OutlinedTextField(
+                value = userPassword,
+                onValueChange = { userPassword = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = {
+                    Text(
+                        text = "••••••••",
+                        color = Color.Gray
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = "Lock Icon",
+                        tint = Color.Gray
+                    )
+                },
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible)
+                                Icons.Default.Visibility
+                            else
+                                Icons.Default.VisibilityOff,
+                            contentDescription = if (passwordVisible)
+                                "Hide password"
+                            else
+                                "Show password",
+                            tint = Color.Gray
+                        )
+                    }
+                },
+                visualTransformation = if (passwordVisible)
+                    VisualTransformation.None
+                else
+                    PasswordVisualTransformation(),
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = PrimaryPurple,
+                    unfocusedBorderColor = Color(0xFFE0E0E0),
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Button Masuk
+            Button(
+                onClick = {
+                    viewModel.login(context, userEmail, userPassword)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                enabled = userEmail.isNotEmpty() && userPassword.isNotEmpty(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PrimaryPurple,
+                    disabledContainerColor = Color(0xFFE0E0E0)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                if (userState is UserState.Loading) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                } else {
+                    Text(
+                        text = "Masuk",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
                     )
                 }
             }
-            else -> {}
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Lupa Kata Sandi
+            Text(
+                text = "Lupa Kata Sandi?",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = PrimaryPurple,
+                modifier = Modifier.align(Alignment.End)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Divider "Atau"
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Divider(
+                    modifier = Modifier.weight(1f),
+                    color = Color(0xFFE0E0E0)
+                )
+                Text(
+                    text = "Atau",
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                Divider(
+                    modifier = Modifier.weight(1f),
+                    color = Color(0xFFE0E0E0)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Belum punya akun? Daftar
+            val annotatedText = buildAnnotatedString {
+                withStyle(style = SpanStyle(color = Color.Black, fontSize = 14.sp)) {
+                    append("Belum punya akun?  ")
+                }
+                pushStringAnnotation(tag = "DAFTAR", annotation = "daftar")
+                withStyle(
+                    style = SpanStyle(
+                        color = PrimaryPurple,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                ) {
+                    append("Daftar")
+                }
+                pop()
+            }
+
+            ClickableText(
+                text = annotatedText,
+                onClick = { offset ->
+                    annotatedText.getStringAnnotations(
+                        tag = "DAFTAR",
+                        start = offset,
+                        end = offset
+                    ).firstOrNull()?.let {
+                        navController.navigate("register")
+                    }
+                },
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+
+            // Error Message
+            if (errorMessage.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 14.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }
+
