@@ -72,6 +72,9 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.navigation.runtime.ktx)
+    implementation(libs.androidx.runtime)
+    implementation(libs.androidx.navigation.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -79,9 +82,15 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
-    implementation("io.github.jan-tennert.supabase:gotrue-kt:1.3.2")
+    implementation(platform("io.github.jan-tennert.supabase:bom:2.6.0"))
     implementation("io.ktor:ktor-client-cio:2.3.4")
+    implementation("io.github.jan-tennert.supabase:gotrue-kt")
+    implementation("io.github.jan-tennert.supabase:storage-kt") // Storage
+    implementation("io.github.jan-tennert.supabase:realtime-kt") // Realtime
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
+
+    implementation("androidx.compose.runtime:runtime:1.9.5")
+    implementation("androidx.compose.runtime:runtime-livedata:1.9.5")
+
 }
