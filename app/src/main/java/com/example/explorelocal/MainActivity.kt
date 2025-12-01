@@ -39,6 +39,9 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+
+
 //    @Composable
 //    fun MainScreen(
 //        viewModel: SupabaseAuthViewModel = viewModel(),
