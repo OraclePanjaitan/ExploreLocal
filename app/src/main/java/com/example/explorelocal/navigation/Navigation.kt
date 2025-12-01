@@ -1,28 +1,57 @@
 package com.example.explorelocal.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.explorelocal.data.model.UserState
+import com.example.explorelocal.ui.screen.auth.LoginScreen
+import com.example.explorelocal.ui.screen.auth.RegisterScreen
+import com.example.explorelocal.ui.screen.auth.SplashScreen
+import com.example.explorelocal.ui.screen.auth.SplashScreen
+import com.example.explorelocal.ui.screen.home.HomeScreen
 import com.example.explorelocal.viewmodel.AuthViewModel
 
 @Composable
-fun AppNavigation(
-    navController: NavHostController,
-    authViewModel: AuthViewModel
-) {
-    val authState by authViewModel.authState.collectAsState()
+fun AppNavigation() {
+    val navController = rememberNavController()
+    val authViewModel: AuthViewModel = viewModel()
 
     NavHost(
         navController = navController,
-        startDestination = if (authState.isLoggedIn) "home" else "login"
+        startDestination = "splash"  // ✅ Selalu mulai dari splash
     ) {
-        composable("splash") { SplashContent(authViewModel) }
-        composable("login") { LoginScreen(authViewModel, navController) }
-        composable("register") { RegisterScreen(authViewModel, navController) }
-        composable("home") { HomeScreen(navController) }
-        composable("umkm_list") { UmkmListScreen(navController) }
-        composable("umkm_detail/{umkmId}") {
-            UmkmDetailScreen(navController)
+        composable("splash") {
+            SplashScreen(navController, authViewModel)  // ✅ Pass navController
         }
-        // ... route lainnya
+        composable("login") {
+            LoginScreen(navController, authViewModel)  // ✅ Urutan parameter benar
+        }
+        composable("register") {
+            RegisterScreen(navController, authViewModel)  // ✅ Urutan parameter benar
+        }
+        composable("home") {
+            HomeScreen(navController)
+        }
+        composable("umkm_list") {
+            // UmkmListScreen(navController)
+        }
+        composable("umkm_detail/{umkmId}") { backStackEntry ->
+            val umkmId = backStackEntry.arguments?.getString("umkmId")
+            // UmkmDetailScreen(navController, umkmId)
+        }
+        composable("promo") {
+            // PromoListScreen(navController)
+        }
+        composable("location") {
+            // UmkmLocationScreen(navController)
+        }
+        composable("profile") {
+            // ProfileScreen(navController, authViewModel)
+        }
     }
 }

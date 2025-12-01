@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,14 +33,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.explorelocal.LoadingComponent
 import com.example.explorelocal.data.model.UserState
-import com.example.explorelocal.data.repository.SupabaseAuthViewModel
+import com.example.explorelocal.viewmodel.AuthViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.time.delay
+
 
 @Composable
 fun RegisterScreen(
     navController: NavController,
-    viewModel: SupabaseAuthViewModel = viewModel()
+    viewModel: AuthViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val userState by viewModel.userState.collectAsState()
@@ -48,12 +50,14 @@ fun RegisterScreen(
     var userPassword by remember { mutableStateOf("") }
     var successMessage by remember { mutableStateOf("") }
 
+    var errorMessage by remember { mutableStateOf("") }
+
     LaunchedEffect(userState) {
         when(userState) {
             is UserState.Success -> {
                 successMessage = (userState as UserState.Success).message
                 // Redirect ke login setelah sukses register
-                delay(1500)
+                delay(5)
                 navController.navigate("login") {
                     popUpTo("register") { inclusive = true }
                 }
@@ -111,16 +115,27 @@ fun RegisterScreen(
         }
 
         when(userState) {
-            is UserState.Loading -> LoadingComponent()
-            is UserState.Success -> {
-                Text(successMessage, color = Color.Green)
+            is UserState.Loading -> {
+                Spacer(modifier = Modifier.height(16.dp))
+                CircularProgressIndicator()
             }
-            is UserState.Error -> {
+            is UserState.Success -> {
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    (userState as UserState.Error).message,
-                    color = MaterialTheme.colorScheme.error
+                    text = (userState as UserState.Success).message,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
+            is UserState.Error -> {
+                if(errorMessage.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = errorMessage,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+            else -> {}
         }
     }
 }

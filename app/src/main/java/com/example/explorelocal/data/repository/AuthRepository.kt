@@ -1,108 +1,120 @@
 package com.example.explorelocal.data.repository
 
-
 import android.content.Context
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.State
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.explorelocal.data.model.UserState
-import kotlinx.coroutines.launch
-import io.github.jan.supabase.gotrue.gotrue
-import io.github.jan.supabase.gotrue.providers.builtin.Email
-import com.example.explorelocal.data.network.SupabaseClient
 import com.example.explorelocal.data.network.SupabaseClient.client
 import com.example.explorelocal.utils.SharedPreferenceHelper
+import io.github.jan.supabase.gotrue.auth  // ✅ Import auth
+import io.github.jan.supabase.gotrue.providers.builtin.Email
+import io.github.jan.supabase.gotrue.user.UserInfo
 
+/**
+ * Repository untuk handle Auth operations dengan Supabase
+ * Repository TIDAK extend ViewModel, hanya handle data operations
+ */
+class AuthRepository {
 
-class SupabaseAuthViewModel: ViewModel() {
-    private  val _userState = mutableStateOf<UserState>(UserState.Loading)
-    val userState: State<UserState> = _userState
-
-    fun signUp(
-        context: Context,
-        userEmail: String,
-        userPassword: String,
-    ){
-        viewModelScope.launch {
-            _userState.value = UserState.Loading
-            try {
-                client.gotrue.signUpWith(Email){
-                    email = userEmail
-                    password = userPassword
-                }
-                saveToken(context)
-                _userState.value = UserState.Success("Registered User Successfully!")
-            }catch (e: Exception){
-                _userState.value = UserState.Error("Error:${e.message}")
+    /**
+     * Sign up user baru
+     */
+    suspend fun signUp(userEmail: String, userPassword: String): Result<Unit> {
+        return try {
+            client.auth.signUpWith(Email) {  // ✅ auth bukan gotrue
+                email = userEmail
+                password = userPassword
             }
-        }
-    }
-    private fun saveToken(context: Context){
-        viewModelScope.launch {
-            val accessToken = client.gotrue.currentAccessTokenOrNull()
-            val sharedPref = SharedPreferenceHelper(context)
-            sharedPref.saveStringData("accessToken",accessToken)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
-    private fun getToken(context: Context): String?{
+    /**
+     * Login user
+     */
+    suspend fun login(userEmail: String, userPassword: String): Result<Unit> {
+        return try {
+            client.auth.signInWith(Email) {  // ✅ signInWith bukan loginWith
+                email = userEmail
+                password = userPassword
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Logout user
+     */
+    suspend fun logout(): Result<Unit> {
+        return try {
+            client.auth.signOut()  // ✅ signOut bukan logout
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get current access token
+     */
+    fun getCurrentToken(): String? {
+        return try {
+            client.auth.currentAccessTokenOrNull()  // ✅ auth bukan gotrue
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Retrieve user for current session
+     */
+    suspend fun retrieveCurrentUser(): Result<UserInfo> {
+        return try {
+            val user = client.auth.retrieveUserForCurrentSession()  // ✅ Updated method
+            Result.success(user)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Refresh current session
+     */
+    suspend fun refreshSession(): Result<Unit> {
+        return try {
+            client.auth.refreshCurrentSession()  // ✅ auth bukan gotrue
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Save token to SharedPreferences
+     */
+    fun saveToken(context: Context) {
+        val accessToken = getCurrentToken()
+        if (accessToken != null) {
+            val sharedPref = SharedPreferenceHelper(context)
+            sharedPref.saveStringData("accessToken", accessToken)
+        }
+    }
+
+    /**
+     * Get token from SharedPreferences
+     */
+    fun getToken(context: Context): String? {
         val sharedPref = SharedPreferenceHelper(context)
         return sharedPref.getStringData("accessToken")
     }
 
-    fun login(
-        context: Context,
-        userEmail: String,
-        userPassword: String,
-    ){
-        viewModelScope.launch {
-            _userState.value = UserState.Loading
-            try {
-                client.gotrue.loginWith(Email){
-                    email = userEmail
-                    password = userPassword
-                }
-                saveToken(context)
-                _userState.value = UserState.Success("Logged in successfully!")
-            }catch (e: Exception){
-                _userState.value = UserState.Error("Error:${e.message}")
-            }
-        }
-    }
-
-    fun logout(context: Context){
+    /**
+     * Clear token from SharedPreferences
+     */
+    fun clearToken(context: Context) {
         val sharedPref = SharedPreferenceHelper(context)
-        viewModelScope.launch {
-            _userState.value = UserState.Loading
-            try {
-                client.gotrue.logout()
-                sharedPref.clearPreferences()
-                _userState.value = UserState.Success("Logged out successfully!")
-            }catch (e: Exception){
-                _userState.value = UserState.Error("Error:${e.message}")
-            }
-        }
-    }
-
-    fun isUserLoggedIn(
-        context: Context
-    ){
-        viewModelScope.launch {
-            try {
-                val token = getToken(context)
-                if(token.isNullOrEmpty()){
-                    _userState.value = UserState.Error("User is not logged in!")
-                }else{
-                    client.gotrue.retrieveUser(token)
-                    client.gotrue.refreshCurrentSession()
-                    saveToken(context)
-                    _userState.value = UserState.Success("User is already logged in!")
-                }
-            }catch (e: Exception){
-                _userState.value = UserState.Error("Error:${e.message}")
-            }
-        }
+        sharedPref.clearPreferences()
     }
 }

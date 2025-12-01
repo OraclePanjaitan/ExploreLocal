@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.explorelocal.data.model.UserState
+import com.example.explorelocal.navigation.AppNavigation
 import com.example.explorelocal.ui.theme.ExploreLocalTheme
 
 class MainActivity : ComponentActivity() {
@@ -34,7 +35,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ExploreLocalTheme {
-//                MainScreen()
+                AppNavigation()
             }
         }
     }

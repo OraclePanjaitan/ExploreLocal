@@ -31,13 +31,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.explorelocal.data.model.UserState
-import com.example.explorelocal.data.repository.SupabaseAuthViewModel
 import kotlinx.coroutines.time.delay
+import androidx.compose.runtime.collectAsState
+import com.example.explorelocal.viewmodel.AuthViewModel
 
 @Composable
 fun LoginScreen(
     navController: NavController,
-    viewModel: SupabaseAuthViewModel = viewModel()
+    viewModel: AuthViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val userState by viewModel.userState.collectAsState()

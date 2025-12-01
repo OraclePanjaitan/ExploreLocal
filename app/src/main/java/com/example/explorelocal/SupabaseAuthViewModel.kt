@@ -8,7 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.explorelocal.data.model.UserState
 import kotlinx.coroutines.launch
-import io.github.jan.supabase.gotrue.gotrue
+import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
 import com.example.explorelocal.data.network.SupabaseClient
 import com.example.explorelocal.data.network.SupabaseClient.client
