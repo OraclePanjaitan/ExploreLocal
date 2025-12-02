@@ -13,7 +13,9 @@ import com.example.explorelocal.ui.screen.auth.LoginScreen
 import com.example.explorelocal.ui.screen.auth.RegisterScreen
 import com.example.explorelocal.ui.screen.auth.SplashScreen
 import com.example.explorelocal.ui.screen.auth.SplashScreen
+import com.example.explorelocal.ui.screen.location.UmkmLocationScreen
 import com.example.explorelocal.ui.screen.profile.ProfileScreen
+import com.example.explorelocal.ui.screen.promo.PromoListScreen
 import com.example.explorelocal.ui.screen.umkm.UmkmListScreen
 import com.example.explorelocal.viewmodel.AuthViewModel
 
@@ -24,16 +26,19 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = "splash"  // ✅ Selalu mulai dari splash
+        startDestination = "splash"
     ) {
         composable("splash") {
-            SplashScreen(navController, authViewModel)  // ✅ Pass navController
+            SplashScreen(navController, authViewModel)
         }
         composable("login") {
-            LoginScreen(navController, authViewModel)  // ✅ Urutan parameter benar
+            LoginScreen(navController, authViewModel)
         }
         composable("register") {
-            RegisterScreen(navController, authViewModel)  // ✅ Urutan parameter benar
+            RegisterScreen(navController, authViewModel)
+        }
+        composable("umkm_list") {
+            UmkmListScreen(navController)
         }
         composable("umkm_list") {
             UmkmListScreen(navController)
@@ -43,10 +48,10 @@ fun AppNavigation() {
             // UmkmDetailScreen(navController, umkmId)
         }
         composable("promo") {
-            // PromoListScreen(navController)
+            PromoListScreen(navController)
         }
         composable("location") {
-            // UmkmLocationScreen(navController)
+            UmkmLocationScreen(navController)
         }
         composable("profile") {
             ProfileScreen(navController, authViewModel)

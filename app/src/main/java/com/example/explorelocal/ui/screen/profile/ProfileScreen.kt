@@ -21,10 +21,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.explorelocal.data.model.UserState
+import com.example.explorelocal.navigation.BottomNavItem
 import com.example.explorelocal.ui.theme.PrimaryPurple
 import com.example.explorelocal.viewmodel.AuthViewModel
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
@@ -35,13 +38,18 @@ fun ProfileScreen(
     val userState by viewModel.userState.collectAsState()
     var showLogoutDialog by remember { mutableStateOf(false) }
 
-    // Observe logout state
+    val items = listOf(
+        BottomNavItem.Umkm,
+        BottomNavItem.Promo,
+        BottomNavItem.Location,
+        BottomNavItem.Profile
+    )
+
     LaunchedEffect(userState) {
         when(userState) {
             is UserState.LoggedOut -> {
-                // Navigate to login after logout
                 navController.navigate("login") {
-                    popUpTo(0) { inclusive = true }  // Clear all back stack
+                    popUpTo(0) { inclusive = true }
                 }
             }
             else -> {}
@@ -71,195 +79,43 @@ fun ProfileScreen(
                     titleContentColor = Color.White
                 )
             )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Profile Avatar
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .background(
-                        color = PrimaryPurple.copy(alpha = 0.2f),
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
+        },
+        bottomBar = {
+            NavigationBar(
+                containerColor = Color.White,
+                contentColor = PrimaryPurple
             ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Profile Picture",
-                    modifier = Modifier.size(60.dp),
-                    tint = PrimaryPurple
-                )
-            }
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentDestination = navBackStackEntry?.destination
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // User Name
-            Text(
-                text = "User Account",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // User Email (from UserState)
-            when(val state = userState) {
-                is UserState.LoggedIn -> {
-                    Text(
-                        text = state.user?.email ?: "user@email.com",
-                        fontSize = 16.sp,
-                        color = Color.Gray
-                    )
-                }
-                else -> {
-                    Text(
-                        text = "user@email.com",
-                        fontSize = 16.sp,
-                        color = Color.Gray
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            // Profile Info Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFF5F5F5)
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    // Email Info
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Email,
-                            contentDescription = "Email",
-                            tint = PrimaryPurple
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column {
-                            Text(
-                                text = "Email",
-                                fontSize = 12.sp,
-                                color = Color.Gray
-                            )
-                            when(val state = userState) {
-                                is UserState.LoggedIn -> {
-                                    Text(
-                                        text = state.user?.email ?: "user@email.com",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                                else -> {
-                                    Text(
-                                        text = "user@email.com",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Logout Button
-            Button(
-                onClick = {
-                    showLogoutDialog = true
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFE53935)  // Red color
-                ),
-                shape = RoundedCornerShape(12.dp),
-                enabled = userState !is UserState.Loading
-            ) {
-                if (userState is UserState.Loading) {
-                    CircularProgressIndicator(
-                        color = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                } else {
-                    Text(
-                        text = "Logout",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // App Version
-            Text(
-                text = "ExploreLocal v1.0.0",
-                fontSize = 12.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center
-            )
-        }
-
-        // Logout Confirmation Dialog
-        if (showLogoutDialog) {
-            AlertDialog(
-                onDismissRequest = { showLogoutDialog = false },
-                title = {
-                    Text(
-                        text = "Konfirmasi Logout",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                text = {
-                    Text("Apakah Anda yakin ingin keluar dari akun?")
-                },
-                confirmButton = {
-                    TextButton(
+                items.forEach { item ->
+                    NavigationBarItem(
+                        icon = { Icon(item.icon, contentDescription = item.title) },
+                        label = { Text(item.title) },
+                        selected = currentDestination?.hierarchy?.any {
+                            it.route == item.route
+                        } == true,
                         onClick = {
-                            showLogoutDialog = false
-                            viewModel.logout(context)
-                        }
-                    ) {
-                        Text(
-                            text = "Ya, Logout",
-                            color = Color(0xFFE53935)
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = PrimaryPurple,
+                            selectedTextColor = PrimaryPurple,
+                            unselectedIconColor = Color.Gray,
+                            unselectedTextColor = Color.Gray,
+                            indicatorColor = PrimaryPurple.copy(alpha = 0.1f)
                         )
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { showLogoutDialog = false }
-                    ) {
-                        Text(
-                            text = "Batal",
-                            color = PrimaryPurple
-                        )
-                    }
+                    )
                 }
-            )
+            }
         }
+    ) {paddingValues ->
+
     }
 }
