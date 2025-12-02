@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -17,6 +18,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.explorelocal.navigation.AppNavigation
 import com.example.explorelocal.navigation.BottomNavItem
 import com.example.explorelocal.ui.theme.PrimaryPurple
 
@@ -111,3 +113,10 @@ fun UmkmListScreen(navController: NavController) {
         }
     }
 }
+
+@Preview
+@Composable
+fun Previewss(){
+    AppNavigation()
+}
+
