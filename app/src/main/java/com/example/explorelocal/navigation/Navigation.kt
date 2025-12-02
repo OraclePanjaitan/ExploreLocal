@@ -13,7 +13,8 @@ import com.example.explorelocal.ui.screen.auth.LoginScreen
 import com.example.explorelocal.ui.screen.auth.RegisterScreen
 import com.example.explorelocal.ui.screen.auth.SplashScreen
 import com.example.explorelocal.ui.screen.auth.SplashScreen
-import com.example.explorelocal.ui.screen.home.HomeScreen
+import com.example.explorelocal.ui.screen.profile.ProfileScreen
+import com.example.explorelocal.ui.screen.umkm.UmkmListScreen
 import com.example.explorelocal.viewmodel.AuthViewModel
 
 @Composable
@@ -34,11 +35,8 @@ fun AppNavigation() {
         composable("register") {
             RegisterScreen(navController, authViewModel)  // ✅ Urutan parameter benar
         }
-        composable("home") {
-            HomeScreen(navController)
-        }
         composable("umkm_list") {
-            // UmkmListScreen(navController)
+            UmkmListScreen(navController)
         }
         composable("umkm_detail/{umkmId}") { backStackEntry ->
             val umkmId = backStackEntry.arguments?.getString("umkmId")
@@ -51,7 +49,7 @@ fun AppNavigation() {
             // UmkmLocationScreen(navController)
         }
         composable("profile") {
-            // ProfileScreen(navController, authViewModel)
+            ProfileScreen(navController, authViewModel)
         }
     }
 }

@@ -46,7 +46,7 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             _userState.value = UserState.Loading
 
-            val result = authRepository.login(userEmail, userPassword)  // ✅ Pakai repository
+            val result = authRepository.login(userEmail, userPassword)
 
             if (result.isSuccess) {
                 authRepository.saveToken(context)

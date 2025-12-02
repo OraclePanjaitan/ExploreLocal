@@ -14,9 +14,6 @@ import io.github.jan.supabase.gotrue.user.UserInfo
  */
 class AuthRepository {
 
-    /**
-     * Sign up user baru
-     */
     suspend fun signUp(userEmail: String, userPassword: String): Result<Unit> {
         return try {
             client.auth.signUpWith(Email) {  // ✅ auth bukan gotrue
@@ -106,8 +103,11 @@ class AuthRepository {
      * Get token from SharedPreferences
      */
     fun getToken(context: Context): String? {
-        val sharedPref = SharedPreferenceHelper(context)
-        return sharedPref.getStringData("accessToken")
+        return try {
+            client.auth.currentAccessTokenOrNull()  // ✅ Apakah ini return token?
+        } catch (e: Exception) {
+            null
+        }
     }
 
     /**

@@ -49,13 +49,12 @@ fun RegisterScreen(
     var errorMessage by remember { mutableStateOf("") }
     var successMessage by remember { mutableStateOf("") }
 
-    // Observe state changes
+    // Observe state changes untuk navigation
     LaunchedEffect(userState) {
         when(userState) {
             is UserState.Success -> {
                 successMessage = (userState as UserState.Success).message
-                // Redirect ke login setelah sukses register
-                delay(1500)  // ✅ 1500ms = 1.5 detik
+                delay(1500)
                 navController.navigate("login") {
                     popUpTo("register") { inclusive = true }
                 }
