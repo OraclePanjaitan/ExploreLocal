@@ -48,11 +48,22 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
+
+    LaunchedEffect(Unit) {
+        viewModel.isUserLoggedIn(context)
+    }
+
     // Observe state changes
     LaunchedEffect(userState) {
         when(userState) {
+            is UserState.LoggedIn -> {
+                navController.navigate("umkm_list") {
+                    popUpTo("login") { inclusive = true }
+                }
+            }
             is UserState.Success -> {
-                navController.navigate("home") {
+                delay(500)
+                navController.navigate("umkm_list") {
                     popUpTo("login") { inclusive = true }
                 }
             }

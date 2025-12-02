@@ -13,7 +13,10 @@ import com.example.explorelocal.ui.screen.auth.LoginScreen
 import com.example.explorelocal.ui.screen.auth.RegisterScreen
 import com.example.explorelocal.ui.screen.auth.SplashScreen
 import com.example.explorelocal.ui.screen.auth.SplashScreen
-import com.example.explorelocal.ui.screen.home.HomeScreen
+import com.example.explorelocal.ui.screen.location.UmkmLocationScreen
+import com.example.explorelocal.ui.screen.profile.ProfileScreen
+import com.example.explorelocal.ui.screen.promo.PromoListScreen
+import com.example.explorelocal.ui.screen.umkm.UmkmListScreen
 import com.example.explorelocal.viewmodel.AuthViewModel
 
 @Composable
@@ -23,35 +26,32 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = "splash"  // ✅ Selalu mulai dari splash
+        startDestination = "umkm_list"
     ) {
         composable("splash") {
-            SplashScreen(navController, authViewModel)  // ✅ Pass navController
+            SplashScreen(navController, authViewModel)
         }
         composable("login") {
-            LoginScreen(navController, authViewModel)  // ✅ Urutan parameter benar
+            LoginScreen(navController, authViewModel)
         }
         composable("register") {
-            RegisterScreen(navController, authViewModel)  // ✅ Urutan parameter benar
-        }
-        composable("home") {
-            HomeScreen(navController)
+            RegisterScreen(navController, authViewModel)
         }
         composable("umkm_list") {
-            // UmkmListScreen(navController)
+            UmkmListScreen(navController)
         }
         composable("umkm_detail/{umkmId}") { backStackEntry ->
             val umkmId = backStackEntry.arguments?.getString("umkmId")
             // UmkmDetailScreen(navController, umkmId)
         }
         composable("promo") {
-            // PromoListScreen(navController)
+            PromoListScreen(navController)
         }
         composable("location") {
-            // UmkmLocationScreen(navController)
+            UmkmLocationScreen(navController)
         }
         composable("profile") {
-            // ProfileScreen(navController, authViewModel)
+            ProfileScreen(navController, authViewModel)
         }
     }
 }
