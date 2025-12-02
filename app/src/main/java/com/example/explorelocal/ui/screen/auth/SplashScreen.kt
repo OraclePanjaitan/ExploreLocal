@@ -161,9 +161,3 @@ fun SplashScreen(
     }
 }
 
-@Preview
-@Composable
-fun previews(){
-    AppNavigation()
-}
-

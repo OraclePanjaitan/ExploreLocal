@@ -93,5 +93,6 @@ dependencies {
 
     implementation("androidx.compose.runtime:runtime:1.9.5")
     implementation("androidx.compose.runtime:runtime-livedata:1.9.5")
+    implementation("androidx.compose.material:material-icons-extended-android:1.7.8")
 
 }
