@@ -26,7 +26,7 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = "umkm_list"
+        startDestination = "splash"
     ) {
         composable("splash") {
             SplashScreen(navController, authViewModel)
