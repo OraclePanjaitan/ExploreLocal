@@ -1,21 +1,25 @@
 package com.example.explorelocal.ui.screen.umkm
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -25,6 +29,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
+import coil.compose.rememberAsyncImagePainter
 import com.example.explorelocal.LoadingComponent
 import com.example.explorelocal.data.model.Umkm
 import com.example.explorelocal.navigation.AppNavigation
@@ -39,14 +44,15 @@ fun UmkmListScreen(
     navController: NavController,
     viewModel: UmkmViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val umkmState by viewModel.umkmState.collectAsState()
-    var showAddDialog by remember { mutableStateOf(false) }
+    val uploadedImageUrl by viewModel.uploadedImageUrl.collectAsState()
 
-    // Form states
+    var showAddDialog by remember { mutableStateOf(false) }
     var nama by remember { mutableStateOf("") }
     var kategori by remember { mutableStateOf("") }
     var deskripsi by remember { mutableStateOf("") }
-    var fotoUrl by remember { mutableStateOf("") }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     val items = listOf(
         BottomNavItem.Umkm,
@@ -55,21 +61,107 @@ fun UmkmListScreen(
         BottomNavItem.Profile
     )
 
+    // Image picker launcher
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            selectedImageUri = it
+            viewModel.uploadImage(it, context)
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.loadAllUmkm()
+    }
+
+    // Handle success state
+    LaunchedEffect(umkmState) {
+        when (umkmState) {
+            is UmkmState.Success -> {
+                showAddDialog = false
+                nama = ""
+                kategori = ""
+                deskripsi = ""
+                selectedImageUri = null
+                viewModel.resetState()
+            }
+            else -> {}
+        }
     }
 
     // Dialog untuk tambah UMKM
     if (showAddDialog) {
         AlertDialog(
-            onDismissRequest = { showAddDialog = false },
+            onDismissRequest = {
+                showAddDialog = false
+                selectedImageUri = null
+                viewModel.resetUploadedImage()
+            },
             title = { Text("Tambah UMKM Baru") },
             text = {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
                         .padding(8.dp)
                 ) {
+                    // Image picker card
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clickable { imagePickerLauncher.launch("image/*") },
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.LightGray.copy(alpha = 0.3f)
+                        )
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            when {
+                                umkmState is UmkmState.Uploading -> {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        CircularProgressIndicator(color = PrimaryPurple)
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text("Uploading...", color = Color.Gray)
+                                    }
+                                }
+                                uploadedImageUrl != null -> {
+                                    Image(
+                                        painter = rememberAsyncImagePainter(uploadedImageUrl),
+                                        contentDescription = "Preview",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                                selectedImageUri != null -> {
+                                    Image(
+                                        painter = rememberAsyncImagePainter(selectedImageUri),
+                                        contentDescription = "Preview",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                                else -> {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Icon(
+                                            imageVector = Icons.Default.PhotoCamera,
+                                            contentDescription = "Upload Photo",
+                                            modifier = Modifier.size(48.dp),
+                                            tint = Color.Gray
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text("Tap untuk pilih foto", color = Color.Gray)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     OutlinedTextField(
                         value = nama,
                         onValueChange = { nama = it },
@@ -93,40 +185,38 @@ fun UmkmListScreen(
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    OutlinedTextField(
-                        value = fotoUrl,
-                        onValueChange = { fotoUrl = it },
-                        label = { Text("URL Foto") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
                 }
             },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         if (nama.isNotBlank()) {
                             viewModel.insertUmkm(
                                 nama = nama,
                                 kategori = kategori.ifBlank { null },
                                 deskripsi = deskripsi.ifBlank { null },
-                                fotoUrl = fotoUrl.ifBlank { null }
+                                fotoUrl = uploadedImageUrl
                             )
-                            showAddDialog = false
-                            // Reset form
-                            nama = ""
-                            kategori = ""
-                            deskripsi = ""
-                            fotoUrl = ""
                         }
-                    }
+                    },
+                    enabled = umkmState !is UmkmState.Loading && umkmState !is UmkmState.Uploading
                 ) {
-                    Text("Simpan")
+                    if (umkmState is UmkmState.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = Color.White
+                        )
+                    } else {
+                        Text("Simpan")
+                    }
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showAddDialog = false }) {
+                TextButton(onClick = {
+                    showAddDialog = false
+                    selectedImageUri = null
+                    viewModel.resetUploadedImage()
+                }) {
                     Text("Batal")
                 }
             }
@@ -153,16 +243,9 @@ fun UmkmListScreen(
 
                 items.forEach { item ->
                     NavigationBarItem(
-                        icon = {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.title
-                            )
-                        },
+                        icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
                         label = { Text(item.title) },
-                        selected = currentDestination?.hierarchy?.any {
-                            it.route == item.route
-                        } == true,
+                        selected = currentDestination?.hierarchy?.any { it.route == item.route } == true,
                         onClick = {
                             navController.navigate(item.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
@@ -209,17 +292,20 @@ fun UmkmListScreen(
                 }
 
                 is UmkmState.Error -> {
-                    Text(
-                        text = state.message,
-                        color = Color.Red,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-
-                is UmkmState.Success -> {
-                    LaunchedEffect(state) {
-                        // Show snackbar atau toast
-                        viewModel.resetState()
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = state.message,
+                            color = Color.Red
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = { viewModel.loadAllUmkm() }) {
+                            Text("Coba Lagi")
+                        }
                     }
                 }
 
@@ -236,18 +322,31 @@ fun UmkmItem(umkm: Umkm) {
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = umkm.nama,
-
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
-            )
-            umkm.kategori?.let {
-                Text(text = it, color = Color.Gray, fontSize = 14.sp)
+        Row(modifier = Modifier.padding(16.dp)) {
+            // Foto UMKM
+            umkm.fotoUrl?.let { url ->
+                Image(
+                    painter = rememberAsyncImagePainter(url),
+                    contentDescription = "Foto ${umkm.nama}",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .padding(end = 16.dp),
+                    contentScale = ContentScale.Crop
+                )
             }
-            umkm.deskripsi?.let {
-                Text(text = it, fontSize = 14.sp)
+
+            Column {
+                Text(
+                    text = umkm.nama,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+                umkm.kategori?.let {
+                    Text(text = it, color = Color.Gray, fontSize = 14.sp)
+                }
+                umkm.deskripsi?.let {
+                    Text(text = it, fontSize = 14.sp)
+                }
             }
         }
     }

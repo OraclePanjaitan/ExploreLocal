@@ -1,5 +1,7 @@
 package com.example.explorelocal.viewmodel
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.explorelocal.data.model.Umkm
@@ -11,9 +13,11 @@ import kotlinx.coroutines.launch
 sealed class UmkmState {
     object Idle : UmkmState()
     object Loading : UmkmState()
+    object Uploading : UmkmState()
     data class Success(val message: String) : UmkmState()
     data class Error(val message: String) : UmkmState()
     data class UmkmList(val data: List<Umkm>) : UmkmState()
+
 }
 
 class UmkmViewModel : ViewModel() {
@@ -21,7 +25,26 @@ class UmkmViewModel : ViewModel() {
 
     private val _umkmState = MutableStateFlow<UmkmState>(UmkmState.Idle)
     val umkmState: StateFlow<UmkmState> = _umkmState
+    private val _uploadedImageUrl = MutableStateFlow<String?>(null)
+    val uploadedImageUrl: StateFlow<String?> = _uploadedImageUrl
 
+
+    fun uploadImage(uri: Uri, context: Context) {
+        viewModelScope.launch {
+            _umkmState.value = UmkmState.Uploading
+
+            val result = repository.uploadImage(uri, context)
+
+            if (result.isSuccess) {
+                _uploadedImageUrl.value = result.getOrNull()
+                _umkmState.value = UmkmState.Idle
+            } else {
+                _umkmState.value = UmkmState.Error(
+                    result.exceptionOrNull()?.message ?: "Gagal upload image"
+                )
+            }
+        }
+    }
     fun insertUmkm(nama: String, kategori: String?, deskripsi: String?, fotoUrl: String?) {
         viewModelScope.launch {
             _umkmState.value = UmkmState.Loading
@@ -62,5 +85,9 @@ class UmkmViewModel : ViewModel() {
 
     fun resetState() {
         _umkmState.value = UmkmState.Idle
+    }
+
+    fun resetUploadedImage() {
+        _uploadedImageUrl.value = null
     }
 }
