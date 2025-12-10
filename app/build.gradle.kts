@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.24"
 }
 
 android {
@@ -88,11 +89,13 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:gotrue-kt")
     implementation("io.github.jan-tennert.supabase:storage-kt") // Storage
     implementation("io.github.jan-tennert.supabase:realtime-kt") // Realtime
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
 
     implementation("androidx.compose.runtime:runtime:1.9.5")
     implementation("androidx.compose.runtime:runtime-livedata:1.9.5")
     implementation("androidx.compose.material:material-icons-extended-android:1.7.8")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
 }
