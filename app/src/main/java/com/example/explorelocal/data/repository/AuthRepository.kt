@@ -104,11 +104,13 @@ class AuthRepository {
      */
     fun getToken(context: Context): String? {
         return try {
-            client.auth.currentAccessTokenOrNull()  // ✅ Apakah ini return token?
+            val sharedPref = SharedPreferenceHelper(context)
+            sharedPref.getStringData("accessToken")  // ✅ Ambil dari SharedPreferences
         } catch (e: Exception) {
             null
         }
     }
+
 
     /**
      * Clear token from SharedPreferences
