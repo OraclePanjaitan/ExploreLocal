@@ -48,6 +48,13 @@ fun UmkmListScreen(
     var deskripsi by remember { mutableStateOf("") }
     var fotoUrl by remember { mutableStateOf("") }
 
+    val items = listOf(
+        BottomNavItem.Umkm,
+        BottomNavItem.Promo,
+        BottomNavItem.Location,
+        BottomNavItem.Profile
+    )
+
     LaunchedEffect(Unit) {
         viewModel.loadAllUmkm()
     }
@@ -135,6 +142,46 @@ fun UmkmListScreen(
                     titleContentColor = Color.White
                 )
             )
+        },
+        bottomBar = {
+            NavigationBar(
+                containerColor = Color.White,
+                contentColor = PrimaryPurple
+            ) {
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentDestination = navBackStackEntry?.destination
+
+                items.forEach { item ->
+                    NavigationBarItem(
+                        icon = {
+                            Icon(
+                                imageVector = item.icon,
+                                contentDescription = item.title
+                            )
+                        },
+                        label = { Text(item.title) },
+                        selected = currentDestination?.hierarchy?.any {
+                            it.route == item.route
+                        } == true,
+                        onClick = {
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = PrimaryPurple,
+                            selectedTextColor = PrimaryPurple,
+                            unselectedIconColor = Color.Gray,
+                            unselectedTextColor = Color.Gray,
+                            indicatorColor = PrimaryPurple.copy(alpha = 0.1f)
+                        )
+                    )
+                }
+            }
         },
         floatingActionButton = {
             FloatingActionButton(
