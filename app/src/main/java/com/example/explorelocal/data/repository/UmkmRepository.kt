@@ -43,7 +43,7 @@ class UmkmRepository {
         return try {
             val response = client.from("umkm")
                 .insert(umkm) {
-                    select() // Untuk return data yang baru diinsert
+                    select()
                 }
 
             val insertedData = response.decodeSingle<Umkm>()

@@ -4,11 +4,13 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -21,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -308,7 +311,6 @@ fun UmkmListScreen(
                         }
                     }
                 }
-
                 else -> {}
             }
         }
@@ -320,37 +322,76 @@ fun UmkmItem(umkm: Umkm) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Row(modifier = Modifier.padding(16.dp)) {
-            // Foto UMKM
-            umkm.fotoUrl?.let { url ->
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (umkm.fotoUrl != null) {
                 Image(
-                    painter = rememberAsyncImagePainter(url),
+                    painter = rememberAsyncImagePainter(umkm.fotoUrl),
                     contentDescription = "Foto ${umkm.nama}",
                     modifier = Modifier
-                        .size(80.dp)
-                        .padding(end = 16.dp),
+                        .fillMaxWidth()
+                        .height(180.dp),
                     contentScale = ContentScale.Crop
                 )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .background(Color.LightGray),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PhotoCamera,
+                        contentDescription = "No Image",
+                        modifier = Modifier.size(48.dp),
+                        tint = Color.Gray
+                    )
+                }
             }
 
-            Column {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
                 Text(
                     text = umkm.nama,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
+                    fontSize = 18.sp,
+                    color = Color.Black
                 )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
                 umkm.kategori?.let {
-                    Text(text = it, color = Color.Gray, fontSize = 14.sp)
+                    Text(
+                        text = it,
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
                 }
+
                 umkm.deskripsi?.let {
-                    Text(text = it, fontSize = 14.sp)
+                    Text(
+                        text = it,
+                        fontSize = 14.sp,
+                        color = Color.DarkGray,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
         }
     }
 }
+
 
 
 @Preview
