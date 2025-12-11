@@ -1,18 +1,16 @@
 package com.example.explorelocal.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.explorelocal.data.model.UserState
 import com.example.explorelocal.ui.screen.auth.LoginScreen
 import com.example.explorelocal.ui.screen.auth.RegisterScreen
 import com.example.explorelocal.ui.screen.auth.SplashScreen
-import com.example.explorelocal.ui.screen.auth.SplashScreen
+import com.example.explorelocal.ui.screen.auth.Onboarding3
+import com.example.explorelocal.ui.screen.auth.Onboarding1
+import com.example.explorelocal.ui.screen.auth.Onboarding2
 import com.example.explorelocal.ui.screen.location.UmkmLocationScreen
 import com.example.explorelocal.ui.screen.profile.ProfileScreen
 import com.example.explorelocal.ui.screen.promo.PromoListScreen
@@ -31,6 +29,19 @@ fun AppNavigation() {
         composable("splash") {
             SplashScreen(navController, authViewModel)
         }
+
+        composable("onboarding1") {
+            Onboarding1(navController)
+        }
+
+        composable("onboarding2") {
+            Onboarding2(navController)
+        }
+
+        composable("onboarding3") {
+            Onboarding3(navController)
+        }
+
         composable("login") {
             LoginScreen(navController, authViewModel)
         }

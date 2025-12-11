@@ -128,7 +128,7 @@ fun SplashScreen(
         ) {
             // Tagline
             Text(
-                text = "Ayo Jelajahi UMKM Sekitar!",
+                text = "Ayo Jelajahi Kuliner Sekitar!",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = PrimaryPurple,
@@ -142,7 +142,7 @@ fun SplashScreen(
             if (showButton || userState is UserState.LoggedOut || userState is UserState.Error) {
                 Button(
                     onClick = {
-                        navController.navigate("login") {
+                        navController.navigate("onboarding1") {
                             popUpTo("splash") { inclusive = true }
                         }
                     },
