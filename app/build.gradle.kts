@@ -84,10 +84,13 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation(platform("io.github.jan-tennert.supabase:bom:2.6.0"))
+//    implementation(platform("io.github.jan-tennert.supabase:bom:2.6.0"))
     implementation("io.ktor:ktor-client-cio:2.3.4")
     implementation("io.github.jan-tennert.supabase:gotrue-kt")
-    implementation("io.github.jan-tennert.supabase:storage-kt") // Storage
+//    implementation("io.github.jan-tennert.supabase:storage-kt") // Storage
+    implementation(platform("io.github.jan-tennert.supabase:bom:2.6.0"))
+    implementation("io.github.jan-tennert.supabase:storage-kt")
+
     implementation("io.github.jan-tennert.supabase:realtime-kt") // Realtime
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
 
@@ -97,5 +100,10 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata:1.9.5")
     implementation("androidx.compose.material:material-icons-extended-android:1.7.8")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+
+    implementation("io.ktor:ktor-client-android:2.3.4")
+    implementation("io.ktor:ktor-client-serialization:2.3.4")
+    implementation("io.ktor:ktor-client-logging:2.3.4")
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
 }
