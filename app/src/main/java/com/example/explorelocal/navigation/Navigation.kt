@@ -8,9 +8,10 @@ import androidx.navigation.compose.rememberNavController
 import com.example.explorelocal.ui.screen.auth.LoginScreen
 import com.example.explorelocal.ui.screen.auth.RegisterScreen
 import com.example.explorelocal.ui.screen.auth.SplashScreen
-import com.example.explorelocal.ui.screen.auth.Onboarding3
-import com.example.explorelocal.ui.screen.auth.Onboarding1
-import com.example.explorelocal.ui.screen.auth.Onboarding2
+import com.example.explorelocal.ui.screen.OnboardingRole.Onboarding1
+import com.example.explorelocal.ui.screen.OnboardingRole.Onboarding2
+import com.example.explorelocal.ui.screen.OnboardingRole.Onboarding3
+import com.example.explorelocal.ui.screen.onboardingrole.OnboardingRole
 import com.example.explorelocal.ui.screen.location.UmkmLocationScreen
 import com.example.explorelocal.ui.screen.profile.ProfileScreen
 import com.example.explorelocal.ui.screen.promo.PromoListScreen
@@ -40,6 +41,10 @@ fun AppNavigation() {
 
         composable("onboarding3") {
             Onboarding3(navController)
+        }
+
+        composable("role") {
+            OnboardingRole(navController)
         }
 
         composable("login") {

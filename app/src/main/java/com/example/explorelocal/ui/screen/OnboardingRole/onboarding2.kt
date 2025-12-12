@@ -1,4 +1,4 @@
-package com.example.explorelocal.ui.screen.auth
+package com.example.explorelocal.ui.screen.OnboardingRole
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,13 +37,13 @@ fun Onboarding2(
 
         Image(
             painter = painterResource(id = R.drawable.onboarding2),
-            contentDescription = "Ilustrasi Kuliner",
+            contentDescription = "onboarding2",
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .height(280.dp)
         )
 
-        Spacer(modifier = Modifier.height(160.dp))
+        Spacer(modifier = Modifier.height(140.dp))
 
         Box(
             modifier = Modifier
@@ -87,7 +87,7 @@ fun Onboarding2(
                     // === TOMBOL LEWATI ===
                     OutlinedButton(
                         onClick = {
-                            navController.navigate("login") {
+                            navController.navigate("role") {
                                 popUpTo("onboarding2") { inclusive = true }
                             }
                         },
