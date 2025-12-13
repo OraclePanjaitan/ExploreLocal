@@ -77,6 +77,7 @@ dependencies {
     implementation(libs.androidx.runtime)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.ui)
+    implementation(libs.androidx.preference.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -105,5 +106,7 @@ dependencies {
     implementation("io.ktor:ktor-client-serialization:2.3.4")
     implementation("io.ktor:ktor-client-logging:2.3.4")
     implementation("io.coil-kt:coil-compose:2.5.0")
+
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
 
 }
