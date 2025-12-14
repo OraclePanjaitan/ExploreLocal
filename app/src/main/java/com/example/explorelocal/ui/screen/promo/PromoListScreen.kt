@@ -1,26 +1,38 @@
 package com.example.explorelocal.ui.screen.promo
 
-
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.explorelocal.navigation.BottomNavItem
+import com.example.explorelocal.ui.components.PromoCard
 import com.example.explorelocal.ui.theme.PrimaryPurple
+import com.example.explorelocal.viewmodel.PromoState
+import com.example.explorelocal.viewmodel.PromoViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PromoListScreen(navController: NavController) {
+fun PromoListScreen(
+    navController: NavController,
+    promoViewModel: PromoViewModel = viewModel()
+) {
+    val state by promoViewModel.promoState.collectAsState()
+    var searchQuery by remember { mutableStateOf("") }
+
     val items = listOf(
         BottomNavItem.Umkm,
         BottomNavItem.Promo,
@@ -28,15 +40,14 @@ fun PromoListScreen(navController: NavController) {
         BottomNavItem.Profile
     )
 
+    LaunchedEffect(Unit) {
+        promoViewModel.loadAllPromo()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "Promo & Diskon",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
+                title = { Text("Promo & Diskon") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = PrimaryPurple,
                     titleContentColor = Color.White
@@ -53,11 +64,9 @@ fun PromoListScreen(navController: NavController) {
 
                 items.forEach { item ->
                     NavigationBarItem(
-                        icon = { Icon(item.icon, contentDescription = item.title) },
+                        icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
                         label = { Text(item.title) },
-                        selected = currentDestination?.hierarchy?.any {
-                            it.route == item.route
-                        } == true,
+                        selected = currentDestination?.hierarchy?.any { it.route == item.route } == true,
                         onClick = {
                             navController.navigate(item.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
@@ -77,27 +86,70 @@ fun PromoListScreen(navController: NavController) {
                     )
                 }
             }
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { navController.navigate("add_promo") },
+                containerColor = PrimaryPurple
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Tambah Promo",
+                    tint = Color.White
+                )
+            }
         }
-    ) { paddingValues ->
+    ) { padding ->
+
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            Modifier
+                .padding(padding)
+                .padding(16.dp)
         ) {
-            Text(
-                text = "Promo & Diskon",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
+
+
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Cari Promo UMKM") },
+                leadingIcon = {
+                    Icon(Icons.Default.Search, contentDescription = null)
+                },
+                shape = RoundedCornerShape(50)
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Coming Soon...",
-                fontSize = 16.sp,
-                color = Color.Gray
-            )
+
+            Spacer(Modifier.height(16.dp))
+
+            when (state) {
+                is PromoState.Loading -> {
+                    CircularProgressIndicator()
+                }
+
+                is PromoState.PromoList -> {
+                    val promos = (state as PromoState.PromoList).data
+                        .filter {
+                            it.judul.contains(searchQuery, ignoreCase = true)
+                        }
+
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(promos) { promo ->
+                            PromoCard(promo)
+                        }
+                    }
+                }
+
+                is PromoState.Error -> {
+                    Text(
+                        text = (state as PromoState.Error).message,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+
+                else -> {}
+            }
         }
     }
 }
