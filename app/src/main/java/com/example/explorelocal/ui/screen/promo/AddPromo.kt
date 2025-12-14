@@ -1,18 +1,17 @@
 package com.example.explorelocal.ui.screen.promo
 
-import android.net.Uri
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,7 +25,27 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.explorelocal.data.model.Umkm
 import com.example.explorelocal.viewmodel.PromoState
 import com.example.explorelocal.viewmodel.PromoViewModel
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+/* -------------------- DATE HELPERS -------------------- */
+
+private val DATE_FORMATTER: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("dd/MM/yyyy")
+
+private fun LocalDate.toMillis(): Long =
+    this.atStartOfDay(ZoneId.systemDefault())
+        .toInstant()
+        .toEpochMilli()
+
+private fun millisToLocalDate(millis: Long): LocalDate =
+    Instant.ofEpochMilli(millis)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDate()
+
+/* -------------------- SCREEN -------------------- */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,12 +60,12 @@ fun AddPromoScreen(
     val uploadedBanner by promoViewModel.uploadedBannerUrl.collectAsState()
 
     var selectedUmkm by remember { mutableStateOf<Umkm?>(null) }
-    var dropdownExpanded by remember { mutableStateOf(false) }
 
     var namaPromo by remember { mutableStateOf("") }
     var deskripsiPromo by remember { mutableStateOf("") }
-    var tanggalMulai by remember { mutableStateOf(LocalDate.now().toString()) }
-    var tanggalSelesai by remember { mutableStateOf(LocalDate.now().toString()) }
+
+    var tanggalMulai by remember { mutableStateOf(LocalDate.now()) }
+    var tanggalSelesai by remember { mutableStateOf(LocalDate.now()) }
 
     val jenisPromoOptions = listOf(
         "Cashback",
@@ -93,7 +112,6 @@ fun AddPromoScreen(
         ) {
 
             Spacer(Modifier.height(12.dp))
-
             Text(
                 "Buat promo terbaikmu dan tarik perhatian para penjelajah kuliner!",
                 color = Color.Gray
@@ -101,42 +119,19 @@ fun AddPromoScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // ===== UMKM DROPDOWN =====
+            /* ---------- UMKM ---------- */
             Text("Pilih UMKM Anda", fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(8.dp))
 
-            Box {
-                OutlinedTextField(
-                    value = selectedUmkm?.nama ?: "Daftar UMKM",
-                    onValueChange = {},
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { dropdownExpanded = true },
-                    readOnly = true,
-                    trailingIcon = {
-                        Icon(Icons.Default.ArrowDropDown, null)
-                    }
-                )
-
-                DropdownMenu(
-                    expanded = dropdownExpanded,
-                    onDismissRequest = { dropdownExpanded = false }
-                ) {
-                    umkmList.forEach { umkm ->
-                        DropdownMenuItem(
-                            text = { Text(umkm.nama) },
-                            onClick = {
-                                selectedUmkm = umkm
-                                dropdownExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
+            UmkmDropdown(
+                umkmList = umkmList,
+                selectedUmkm = selectedUmkm,
+                onSelected = { selectedUmkm = it }
+            )
 
             Spacer(Modifier.height(20.dp))
 
-            // ===== NAMA PROMO =====
+            /* ---------- NAMA ---------- */
             Text("Nama Promo", fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
@@ -148,7 +143,7 @@ fun AddPromoScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            // ===== DESKRIPSI =====
+            /* ---------- DESKRIPSI ---------- */
             Text("Deskripsi Promo", fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
@@ -161,29 +156,37 @@ fun AddPromoScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            // ===== TANGGAL =====
+            /* ---------- DATE PICKERS ---------- */
             Text("Pilih Tanggal Mulai dan Tanggal Selesai", fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(8.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = tanggalMulai,
-                    onValueChange = { tanggalMulai = it },
-                    modifier = Modifier.weight(1f),
-                    label = { Text("Tanggal Mulai") }
+
+                DatePickerField(
+                    label = "Tanggal Mulai",
+                    date = tanggalMulai,
+                    minDate = LocalDate.now(),
+                    onDateSelected = {
+                        tanggalMulai = it
+                        if (tanggalSelesai.isBefore(it)) {
+                            tanggalSelesai = it
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
                 )
 
-                OutlinedTextField(
-                    value = tanggalSelesai,
-                    onValueChange = { tanggalSelesai = it },
-                    modifier = Modifier.weight(1f),
-                    label = { Text("Tanggal Selesai") }
+                DatePickerField(
+                    label = "Tanggal Selesai",
+                    date = tanggalSelesai,
+                    minDate = tanggalMulai,
+                    onDateSelected = { tanggalSelesai = it },
+                    modifier = Modifier.weight(1f)
                 )
             }
 
             Spacer(Modifier.height(24.dp))
 
-            // ===== JENIS PROMO =====
+            /* ---------- JENIS PROMO ---------- */
             Text("Jenis Promo (Pilih salah satu*)", fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(12.dp))
 
@@ -218,7 +221,7 @@ fun AddPromoScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // ===== FOTO PROMO =====
+            /* ---------- IMAGE ---------- */
             Text("Foto Promo", fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(8.dp))
 
@@ -226,10 +229,7 @@ fun AddPromoScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp)
-                    .background(
-                        Color(0xFFF3E8FF),
-                        RoundedCornerShape(16.dp)
-                    )
+                    .background(Color(0xFFF3E8FF), RoundedCornerShape(16.dp))
                     .clickable { imagePickerLauncher.launch("image/*") },
                 contentAlignment = Alignment.Center
             ) {
@@ -239,7 +239,7 @@ fun AddPromoScreen(
                     Text("Tap to upload a file")
                     Text(
                         "Select a .PNG .JPG or .JPEG file",
-                        fontSize = MaterialTheme.typography.bodySmall.fontSize,
+                        style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray
                     )
                 }
@@ -247,7 +247,7 @@ fun AddPromoScreen(
 
             Spacer(Modifier.height(32.dp))
 
-            // ===== SUBMIT =====
+            /* ---------- SUBMIT ---------- */
             Button(
                 onClick = {
                     if (selectedUmkm == null || namaPromo.isBlank()) return@Button
@@ -256,8 +256,8 @@ fun AddPromoScreen(
                         umkmId = selectedUmkm!!.id!!,
                         judul = namaPromo,
                         deskripsi = deskripsiPromo,
-                        tanggalMulai = tanggalMulai,
-                        tanggalSelesai = tanggalSelesai,
+                        tanggalMulai = tanggalMulai.toString(),
+                        tanggalSelesai = tanggalSelesai.toString(),
                         bannerUrl = uploadedBanner,
                         jenisPromo = selectedJenisPromo
                     )
@@ -277,5 +277,108 @@ fun AddPromoScreen(
 
             Spacer(Modifier.height(40.dp))
         }
+    }
+}
+
+/* -------------------- COMPONENTS -------------------- */
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun UmkmDropdown(
+    umkmList: List<Umkm>,
+    selectedUmkm: Umkm?,
+    onSelected: (Umkm) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = selectedUmkm?.nama ?: "Daftar UMKM",
+            onValueChange = {},
+            readOnly = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(),
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded)
+            }
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            umkmList.forEach { umkm ->
+                DropdownMenuItem(
+                    text = { Text(umkm.nama) },
+                    onClick = {
+                        onSelected(umkm)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+/* -------------------- DATE FIELD (FIXED) -------------------- */
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DatePickerField(
+    label: String,
+    date: LocalDate,
+    minDate: LocalDate,
+    onDateSelected: (LocalDate) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    if (showDialog) {
+        val pickerState = rememberDatePickerState(
+            initialSelectedDateMillis = date.toMillis(),
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    return !millisToLocalDate(utcTimeMillis).isBefore(minDate)
+                }
+            }
+        )
+
+        DatePickerDialog(
+            onDismissRequest = { showDialog = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    pickerState.selectedDateMillis?.let {
+                        onDateSelected(millisToLocalDate(it))
+                    }
+                    showDialog = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Batal")
+                }
+            }
+        ) {
+            DatePicker(state = pickerState)
+        }
+    }
+
+    Box(
+        modifier = modifier.clickable { showDialog = true }
+    ) {
+        OutlinedTextField(
+            value = date.format(DATE_FORMATTER),
+            onValueChange = {},
+            enabled = false, // 🔑 CRITICAL LINE
+            label = { Text(label) },
+            trailingIcon = {
+                Icon(Icons.Default.CalendarMonth, null)
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
