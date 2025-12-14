@@ -8,9 +8,9 @@ import androidx.navigation.compose.rememberNavController
 import com.example.explorelocal.ui.screen.auth.LoginScreen
 import com.example.explorelocal.ui.screen.auth.RegisterScreen
 import com.example.explorelocal.ui.screen.auth.SplashScreen
-import com.example.explorelocal.ui.screen.OnboardingRole.Onboarding1
-import com.example.explorelocal.ui.screen.OnboardingRole.Onboarding2
-import com.example.explorelocal.ui.screen.OnboardingRole.Onboarding3
+import com.example.explorelocal.ui.screen.onboardingRole.Onboarding1
+import com.example.explorelocal.ui.screen.onboardingRole.Onboarding2
+import com.example.explorelocal.ui.screen.onboardingRole.Onboarding3
 import com.example.explorelocal.ui.screen.onboardingrole.OnboardingRole
 import com.example.explorelocal.ui.screen.location.UmkmLocationScreen
 import com.example.explorelocal.ui.screen.profile.ProfileScreen
@@ -60,9 +60,9 @@ fun AppNavigation() {
             val umkmId = backStackEntry.arguments?.getString("umkmId")
             // UmkmDetailScreen(navController, umkmId)
         }
-        composable("promo") {
-            PromoListScreen(navController)
-        }
+//        composable("promo") {
+//            PromoListScreen(navController)
+//        }
         composable("location") {
             UmkmLocationScreen(navController)
         }
