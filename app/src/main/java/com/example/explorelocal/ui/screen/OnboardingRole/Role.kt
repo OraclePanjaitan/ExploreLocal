@@ -1,4 +1,4 @@
-package com.example.explorelocal.ui.screen.onboardingrole
+package com.example.explorelocal.ui.screen.OnboardingRole
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

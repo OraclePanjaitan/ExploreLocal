@@ -1,8 +1,11 @@
 package com.example.explorelocal.ui.screen.promo
 
 import android.net.Uri
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -38,7 +41,8 @@ fun AddPromoScreen(
     val uploadedBanner by promoViewModel.uploadedBannerUrl.collectAsState()
 
     var selectedUmkm by remember { mutableStateOf<Umkm?>(null) }
-    var expandedDropdown by remember { mutableStateOf(false) }
+    var dropdownExpanded by remember { mutableStateOf(false) }
+
     var namaPromo by remember { mutableStateOf("") }
     var deskripsiPromo by remember { mutableStateOf("") }
     var tanggalMulai by remember { mutableStateOf(LocalDate.now().toString()) }
@@ -51,11 +55,11 @@ fun AddPromoScreen(
         "Diskon",
         "Bundle"
     )
-    var selectedJenisPromo by remember { mutableStateOf(jenisPromoOptions.first()) }
+    var selectedJenisPromo by remember { mutableStateOf("Cashback") }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
+    ) { uri ->
         uri?.let { promoViewModel.uploadBanner(it, context) }
     }
 
@@ -69,18 +73,10 @@ fun AddPromoScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "Tambah Promo",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
+                title = { Text("Promo & Diskon") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Kembali"
-                        )
+                        Icon(Icons.Default.ArrowBack, null)
                     }
                 }
             )
@@ -91,18 +87,23 @@ fun AddPromoScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(20.dp)
+                .padding(horizontal = 20.dp)
+                .verticalScroll(rememberScrollState())
+                .imePadding()
         ) {
 
+            Spacer(Modifier.height(12.dp))
+
             Text(
-                "Buat promo terbaikmu dan tarik perhatian para penjelajah kuliner!"
+                "Buat promo terbaikmu dan tarik perhatian para penjelajah kuliner!",
+                color = Color.Gray
             )
 
             Spacer(Modifier.height(24.dp))
 
-            // ===== PILIH UMKM =====
+            // ===== UMKM DROPDOWN =====
             Text("Pilih UMKM Anda", fontWeight = FontWeight.Medium)
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(8.dp))
 
             Box {
                 OutlinedTextField(
@@ -110,23 +111,23 @@ fun AddPromoScreen(
                     onValueChange = {},
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { expandedDropdown = true },
+                        .clickable { dropdownExpanded = true },
                     readOnly = true,
                     trailingIcon = {
-                        Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                        Icon(Icons.Default.ArrowDropDown, null)
                     }
                 )
 
                 DropdownMenu(
-                    expanded = expandedDropdown,
-                    onDismissRequest = { expandedDropdown = false }
+                    expanded = dropdownExpanded,
+                    onDismissRequest = { dropdownExpanded = false }
                 ) {
                     umkmList.forEach { umkm ->
                         DropdownMenuItem(
                             text = { Text(umkm.nama) },
                             onClick = {
                                 selectedUmkm = umkm
-                                expandedDropdown = false
+                                dropdownExpanded = false
                             }
                         )
                     }
@@ -136,7 +137,8 @@ fun AddPromoScreen(
             Spacer(Modifier.height(20.dp))
 
             // ===== NAMA PROMO =====
-            Text("Nama Promo")
+            Text("Nama Promo", fontWeight = FontWeight.Medium)
+            Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = namaPromo,
                 onValueChange = { namaPromo = it },
@@ -147,70 +149,83 @@ fun AddPromoScreen(
             Spacer(Modifier.height(20.dp))
 
             // ===== DESKRIPSI =====
-            Text("Deskripsi Promo")
+            Text("Deskripsi Promo", fontWeight = FontWeight.Medium)
+            Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = deskripsiPromo,
                 onValueChange = { deskripsiPromo = it },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("Deskripsi Promo") },
-                maxLines = 5
+                minLines = 4
             )
 
             Spacer(Modifier.height(20.dp))
 
             // ===== TANGGAL =====
-            Text("Periode Promo")
+            Text("Pilih Tanggal Mulai dan Tanggal Selesai", fontWeight = FontWeight.Medium)
+            Spacer(Modifier.height(8.dp))
 
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = tanggalMulai,
                     onValueChange = { tanggalMulai = it },
                     modifier = Modifier.weight(1f),
-                    placeholder = { Text("Tanggal Mulai") }
+                    label = { Text("Tanggal Mulai") }
                 )
 
                 OutlinedTextField(
                     value = tanggalSelesai,
                     onValueChange = { tanggalSelesai = it },
                     modifier = Modifier.weight(1f),
-                    placeholder = { Text("Tanggal Selesai") }
+                    label = { Text("Tanggal Selesai") }
                 )
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(24.dp))
 
             // ===== JENIS PROMO =====
-            Text("Jenis Promo", fontWeight = FontWeight.Medium)
+            Text("Jenis Promo (Pilih salah satu*)", fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(12.dp))
 
             jenisPromoOptions.forEach { jenis ->
-                Row(
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    tonalElevation = if (selectedJenisPromo == jenis) 2.dp else 0.dp,
+                    border = BorderStroke(
+                        1.dp,
+                        if (selectedJenisPromo == jenis)
+                            MaterialTheme.colorScheme.primary
+                        else Color(0xFFE5E7EB)
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { selectedJenisPromo = jenis },
-                    verticalAlignment = Alignment.CenterVertically
+                        .clickable { selectedJenisPromo = jenis }
                 ) {
-                    RadioButton(
-                        selected = selectedJenisPromo == jenis,
-                        onClick = { selectedJenisPromo = jenis }
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(jenis)
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = selectedJenisPromo == jenis,
+                            onClick = { selectedJenisPromo = jenis }
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(jenis)
+                    }
                 }
+                Spacer(Modifier.height(8.dp))
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(24.dp))
 
-            // ===== UPLOAD FOTO =====
-            Text("Foto Promo")
+            // ===== FOTO PROMO =====
+            Text("Foto Promo", fontWeight = FontWeight.Medium)
+            Spacer(Modifier.height(8.dp))
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(140.dp)
+                    .height(150.dp)
                     .background(
                         Color(0xFFF3E8FF),
                         RoundedCornerShape(16.dp)
@@ -219,13 +234,18 @@ fun AddPromoScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Upload, contentDescription = null)
+                    Icon(Icons.Default.Upload, null)
                     Spacer(Modifier.height(6.dp))
-                    Text("Tap untuk upload gambar")
+                    Text("Tap to upload a file")
+                    Text(
+                        "Select a .PNG .JPG or .JPEG file",
+                        fontSize = MaterialTheme.typography.bodySmall.fontSize,
+                        color = Color.Gray
+                    )
                 }
             }
 
-            Spacer(Modifier.height(30.dp))
+            Spacer(Modifier.height(32.dp))
 
             // ===== SUBMIT =====
             Button(
@@ -245,15 +265,17 @@ fun AddPromoScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(14.dp)
             ) {
                 Text("KIRIM", fontWeight = FontWeight.Bold)
             }
 
             if (state is PromoState.Loading || state is PromoState.Uploading) {
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(16.dp))
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
+
+            Spacer(Modifier.height(40.dp))
         }
     }
 }

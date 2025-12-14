@@ -10,32 +10,93 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.explorelocal.navigation.BottomNavItem
 import com.example.explorelocal.ui.components.PromoCard
+import com.example.explorelocal.ui.theme.PrimaryPurple
 import com.example.explorelocal.viewmodel.PromoState
 import com.example.explorelocal.viewmodel.PromoViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PromoListScreen(
-    promoViewModel: PromoViewModel = viewModel(),
-    onAddPromo: () -> Unit
+    navController: NavController,
+    promoViewModel: PromoViewModel = viewModel()
 ) {
     val state by promoViewModel.promoState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
+
+    val items = listOf(
+        BottomNavItem.Umkm,
+        BottomNavItem.Promo,
+        BottomNavItem.Location,
+        BottomNavItem.Profile
+    )
 
     LaunchedEffect(Unit) {
         promoViewModel.loadAllPromo()
     }
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Promo & Diskon") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = PrimaryPurple,
+                    titleContentColor = Color.White
+                )
+            )
+        },
+        bottomBar = {
+            NavigationBar(
+                containerColor = Color.White,
+                contentColor = PrimaryPurple
+            ) {
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentDestination = navBackStackEntry?.destination
+
+                items.forEach { item ->
+                    NavigationBarItem(
+                        icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
+                        label = { Text(item.title) },
+                        selected = currentDestination?.hierarchy?.any { it.route == item.route } == true,
+                        onClick = {
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = PrimaryPurple,
+                            selectedTextColor = PrimaryPurple,
+                            unselectedIconColor = Color.Gray,
+                            unselectedTextColor = Color.Gray,
+                            indicatorColor = PrimaryPurple.copy(alpha = 0.1f)
+                        )
+                    )
+                }
+            }
+        },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = onAddPromo,
-                containerColor = MaterialTheme.colorScheme.primary
+                onClick = { navController.navigate("add_promo") },
+                containerColor = PrimaryPurple
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Buat Promo")
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Tambah Promo",
+                    tint = Color.White
+                )
             }
         }
     ) { padding ->
@@ -46,13 +107,6 @@ fun PromoListScreen(
                 .padding(16.dp)
         ) {
 
-            Text(
-                "Promo & Diskon",
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.headlineSmall
-            )
-
-            Spacer(Modifier.height(12.dp))
 
             OutlinedTextField(
                 value = searchQuery,
