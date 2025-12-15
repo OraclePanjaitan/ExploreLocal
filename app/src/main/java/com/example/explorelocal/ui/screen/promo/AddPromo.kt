@@ -29,6 +29,10 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import android.net.Uri
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
+import com.example.explorelocal.viewmodel.BannerUploadState
 
 /* -------------------- DATE HELPERS -------------------- */
 
@@ -55,9 +59,16 @@ fun AddPromoScreen(
     onBack: () -> Unit,
     onSuccess: () -> Unit
 ) {
+    var showSuccessDialog by remember { mutableStateOf(false) }
+    var successMessage by remember { mutableStateOf("") }
+
+    var showDialog by remember { mutableStateOf(false) }
+    var dialogMessage by remember { mutableStateOf("") }
+
     val context = LocalContext.current
     val state by promoViewModel.promoState.collectAsState()
-    val uploadedBanner by promoViewModel.uploadedBannerUrl.collectAsState()
+    val bannerState by promoViewModel.bannerState.collectAsState()
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     var selectedUmkm by remember { mutableStateOf<Umkm?>(null) }
 
@@ -79,14 +90,55 @@ fun AddPromoScreen(
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
-        uri?.let { promoViewModel.uploadBanner(it, context) }
+        uri?.let {
+            selectedImageUri = it
+            promoViewModel.uploadBanner(it, context)
+        }
+    }
+
+    val bannerUrl = when (bannerState) {
+        is BannerUploadState.Success ->
+            (bannerState as BannerUploadState.Success).url
+        else -> null
     }
 
     LaunchedEffect(state) {
-        if (state is PromoState.Success) {
-            onSuccess()
-            promoViewModel.resetState()
+        when (val s = state) {
+            is PromoState.Success -> {
+                successMessage = s.message
+                showSuccessDialog = true
+            }
+            else -> Unit
         }
+    }
+
+    if (showSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Berhasil 🎉") },
+            text = { Text(successMessage) },
+            confirmButton = {
+                TextButton(onClick = {
+
+                    // 🔄 RESET FORM
+                    selectedUmkm = null
+                    namaPromo = ""
+                    deskripsiPromo = ""
+                    selectedImageUri = null
+                    selectedJenisPromo = "Cashback"
+                    tanggalMulai = LocalDate.now()
+                    tanggalSelesai = LocalDate.now()
+
+                    // 🔄 RESET STATE VIEWMODEL
+                    promoViewModel.resetPromoState()
+                    promoViewModel.resetBannerState()
+
+                    showSuccessDialog = false
+                }) {
+                    Text("OK")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -228,21 +280,42 @@ fun AddPromoScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
+                    .height(180.dp)
                     .background(Color(0xFFF3E8FF), RoundedCornerShape(16.dp))
                     .clickable { imagePickerLauncher.launch("image/*") },
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Upload, null)
-                    Spacer(Modifier.height(6.dp))
-                    Text("Tap to upload a file")
-                    Text(
-                        "Select a .PNG .JPG or .JPEG file",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+
+                if (selectedImageUri != null) {
+                    AsyncImage(
+                        model = selectedImageUri,
+                        contentDescription = "Banner Promo",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp),
+                        contentScale = ContentScale.Crop
                     )
+                } else {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.Upload, contentDescription = null)
+                        Spacer(Modifier.height(6.dp))
+                        Text("Tap to upload image")
+                        Text(
+                            "PNG / JPG / JPEG",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
+                    }
                 }
+            }
+
+            if (bannerState is BannerUploadState.Uploading) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Mengupload foto...",
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
 
             Spacer(Modifier.height(32.dp))
@@ -250,27 +323,60 @@ fun AddPromoScreen(
             /* ---------- SUBMIT ---------- */
             Button(
                 onClick = {
-                    if (selectedUmkm == null || namaPromo.isBlank()) return@Button
+                    when {
+                        selectedUmkm == null -> {
+                            dialogMessage = "Silakan pilih UMKM terlebih dahulu."
+                            showDialog = true
+                        }
 
-                    promoViewModel.insertPromo(
-                        umkmId = selectedUmkm!!.id!!,
-                        judul = namaPromo,
-                        deskripsi = deskripsiPromo,
-                        tanggalMulai = tanggalMulai.toString(),
-                        tanggalSelesai = tanggalSelesai.toString(),
-                        bannerUrl = uploadedBanner,
-                        jenisPromo = selectedJenisPromo
-                    )
+                        namaPromo.isBlank() -> {
+                            dialogMessage = "Nama promo tidak boleh kosong."
+                            showDialog = true
+                        }
+
+                        selectedImageUri == null -> {
+                            dialogMessage = "Silakan pilih foto promo terlebih dahulu."
+                            showDialog = true
+                        }
+
+                        bannerState is BannerUploadState.Uploading -> {
+                            dialogMessage = "Foto promo masih diunggah, mohon tunggu."
+                            showDialog = true
+                        }
+
+                        bannerState is BannerUploadState.Error -> {
+                            dialogMessage = "Upload foto gagal, silakan pilih ulang."
+                            showDialog = true
+                        }
+
+                        bannerUrl == null -> {
+                            dialogMessage = "Banner belum berhasil diupload."
+                            showDialog = true
+                        }
+
+                        else -> {
+                            promoViewModel.insertPromo(
+                                umkmId = selectedUmkm!!.id!!,
+                                judul = namaPromo,
+                                deskripsi = deskripsiPromo,
+                                tanggalMulai = tanggalMulai.toString(),
+                                tanggalSelesai = tanggalSelesai.toString(),
+                                bannerUrl = bannerUrl,
+                                jenisPromo = selectedJenisPromo
+                            )
+                        }
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(14.dp)
             ) {
+                // 🔑 CONTENT BUTTON HARUS DI SINI
                 Text("KIRIM", fontWeight = FontWeight.Bold)
             }
 
-            if (state is PromoState.Loading || state is PromoState.Uploading) {
+            if (state is PromoState.Loading || bannerState is BannerUploadState.Uploading) {
                 Spacer(Modifier.height(16.dp))
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }

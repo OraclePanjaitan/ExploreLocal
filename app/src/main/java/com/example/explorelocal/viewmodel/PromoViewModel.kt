@@ -10,57 +10,62 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+/* -------------------- PROMO STATE -------------------- */
+
 sealed class PromoState {
     object Idle : PromoState()
     object Loading : PromoState()
-    object Uploading : PromoState()
 
     data class Success(val message: String) : PromoState()
     data class Error(val message: String) : PromoState()
 
     data class PromoList(val data: List<Promo>) : PromoState()
-    data class PromoDetail(val data: Promo) : PromoState()
 }
 
-// ---------------- VIEWMODEL ----------------
+/* -------------------- VIEWMODEL -------------------- */
+
 class PromoViewModel : ViewModel() {
 
     private val repository = PromoRepository()
 
-    private val _promoState = MutableStateFlow<PromoState>(PromoState.Idle)
+    // 🔹 STATE PROMO
+    private val _promoState =
+        MutableStateFlow<PromoState>(PromoState.Idle)
     val promoState: StateFlow<PromoState> = _promoState
 
-    private val _uploadedBannerUrl = MutableStateFlow<String?>(null)
-    val uploadedBannerUrl: StateFlow<String?> = _uploadedBannerUrl
+    // 🔹 STATE UPLOAD BANNER (BENAR)
+    private val _bannerState =
+        MutableStateFlow<BannerUploadState>(BannerUploadState.Idle)
+    val bannerState: StateFlow<BannerUploadState> = _bannerState
 
+    /* -------------------- 1. UPLOAD BANNER -------------------- */
 
-    // -------------------- 1. Upload Banner --------------------
     fun uploadBanner(uri: Uri, context: Context) {
         viewModelScope.launch {
-            _promoState.value = PromoState.Uploading
+            _bannerState.value = BannerUploadState.Uploading
 
             val result = repository.uploadBanner(uri, context)
 
             if (result.isSuccess) {
-                _uploadedBannerUrl.value = result.getOrNull()
-                _promoState.value = PromoState.Idle
+                _bannerState.value =
+                    BannerUploadState.Success(result.getOrNull()!!)
             } else {
-                _promoState.value = PromoState.Error(
-                    result.exceptionOrNull()?.message ?: "Gagal mengupload banner"
-                )
+                _bannerState.value =
+                    BannerUploadState.Error(
+                        result.exceptionOrNull()?.message
+                            ?: "Gagal mengupload banner"
+                    )
             }
         }
     }
 
-
-    // -------------------- 2. Insert Promo --------------------
     fun insertPromo(
         umkmId: String,
         judul: String,
-        deskripsi: String?,
-        tanggalMulai: String?,
-        tanggalSelesai: String?,
-        bannerUrl: String?,
+        deskripsi: String,
+        tanggalMulai: String,
+        tanggalSelesai: String,
+        bannerUrl: String,
         jenisPromo: String
     ) {
         viewModelScope.launch {
@@ -78,96 +83,89 @@ class PromoViewModel : ViewModel() {
 
             val result = repository.insertPromo(promo)
 
-            if (result.isSuccess) {
-                _promoState.value = PromoState.Success("Promo berhasil ditambahkan")
-                loadAllPromo() // refresh list
+            _promoState.value = if (result.isSuccess) {
+                PromoState.Success("Promo berhasil ditambahkan 🎉")
             } else {
-                _promoState.value = PromoState.Error(
-                    result.exceptionOrNull()?.message ?: "Gagal menambahkan promo"
+                PromoState.Error(
+                    result.exceptionOrNull()?.message ?: "Gagal menyimpan promo"
                 )
             }
         }
     }
 
+    /* -------------------- LOAD DATA -------------------- */
 
-    // -------------------- 3. Get Semua Promo --------------------
     fun loadAllPromo() {
         viewModelScope.launch {
             _promoState.value = PromoState.Loading
-
             val result = repository.getAllPromo()
+
             if (result.isSuccess) {
-                _promoState.value = PromoState.PromoList(result.getOrNull() ?: emptyList())
+                _promoState.value =
+                    PromoState.PromoList(result.getOrNull() ?: emptyList())
             } else {
-                _promoState.value = PromoState.Error(
-                    result.exceptionOrNull()?.message ?: "Gagal memuat promo"
-                )
+                _promoState.value =
+                    PromoState.Error("Gagal memuat promo")
             }
         }
     }
 
-
-    // -------------------- 4. Get Promo by UMKM --------------------
     fun loadPromoByUmkm(umkmId: String) {
         viewModelScope.launch {
             _promoState.value = PromoState.Loading
-
             val result = repository.getPromoByUmkm(umkmId)
+
             if (result.isSuccess) {
-                _promoState.value = PromoState.PromoList(result.getOrNull() ?: emptyList())
+                _promoState.value =
+                    PromoState.PromoList(result.getOrNull() ?: emptyList())
             } else {
-                _promoState.value = PromoState.Error(
-                    result.exceptionOrNull()?.message ?: "Gagal memuat promo UMKM"
-                )
+                _promoState.value =
+                    PromoState.Error("Gagal memuat promo UMKM")
             }
         }
     }
 
+    /* -------------------- UPDATE & DELETE -------------------- */
 
-    // -------------------- 5. Update Promo --------------------
     fun updatePromo(id: String, promo: Promo) {
         viewModelScope.launch {
             _promoState.value = PromoState.Loading
 
             val result = repository.updatePromo(id, promo)
-
             if (result.isSuccess) {
-                _promoState.value = PromoState.Success("Promo berhasil diperbarui")
+                _promoState.value =
+                    PromoState.Success("Promo berhasil diperbarui")
                 loadAllPromo()
             } else {
-                _promoState.value = PromoState.Error(
-                    result.exceptionOrNull()?.message ?: "Gagal memperbarui promo"
-                )
+                _promoState.value =
+                    PromoState.Error("Gagal memperbarui promo")
             }
         }
     }
 
-
-    // -------------------- 6. Delete Promo --------------------
     fun deletePromo(id: String) {
         viewModelScope.launch {
             _promoState.value = PromoState.Loading
 
             val result = repository.deletePromo(id)
-
             if (result.isSuccess) {
-                _promoState.value = PromoState.Success("Promo berhasil dihapus")
+                _promoState.value =
+                    PromoState.Success("Promo berhasil dihapus")
                 loadAllPromo()
             } else {
-                _promoState.value = PromoState.Error(
-                    result.exceptionOrNull()?.message ?: "Gagal menghapus promo"
-                )
+                _promoState.value =
+                    PromoState.Error("Gagal menghapus promo")
             }
         }
     }
 
+    /* -------------------- RESET -------------------- */
 
-    // -------------------- 7. Reset State --------------------
-    fun resetState() {
+    fun resetPromoState() {
         _promoState.value = PromoState.Idle
     }
 
-    fun resetUploadedBanner() {
-        _uploadedBannerUrl.value = null
+    fun resetBannerState() {
+        _bannerState.value = BannerUploadState.Idle
     }
 }
