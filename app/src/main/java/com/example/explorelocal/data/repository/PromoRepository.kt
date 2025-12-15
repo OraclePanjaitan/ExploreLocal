@@ -10,30 +10,43 @@ import java.util.UUID
 
 class PromoRepository {
 
-    suspend fun uploadBanner(uri: Uri, context: Context): Result<String> {
+    suspend fun uploadBanner(
+        uri: Uri,
+        context: Context
+    ): Result<String> {
         return try {
             val bucket = client.storage.from("promo_images")
-            val fileName = "promo/banner_${UUID.randomUUID()}.jpg"
 
             val bytes = context.contentResolver
                 .openInputStream(uri)
-                ?.readBytes()
+                ?.use { it.readBytes() }
                 ?: return Result.failure(Exception("Gagal membaca file"))
 
-            bucket.upload(path = fileName, data = bytes, upsert = false)
-            Result.success(bucket.publicUrl(fileName))
+            val fileName = "banner_${UUID.randomUUID()}.jpg" // ❗ TANPA FOLDER
+
+            bucket.upload(
+                path = fileName,
+                data = bytes,
+                upsert = true
+            )
+
+            val publicUrl = bucket.publicUrl(fileName)
+            Result.success(publicUrl)
 
         } catch (e: Exception) {
+            e.printStackTrace()
             Result.failure(e)
         }
     }
 
     suspend fun insertPromo(promo: Promo): Result<Promo> {
         return try {
-            val response = client.from("promo")
+            val response = client
+                .from("promo")
                 .insert(promo) {
                     select()
                 }
+
             Result.success(response.decodeSingle())
         } catch (e: Exception) {
             Result.failure(e)
