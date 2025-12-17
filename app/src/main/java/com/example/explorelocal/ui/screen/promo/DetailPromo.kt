@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import androidx.compose.material.icons.filled.DateRange
+import coil.request.ImageRequest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,6 +53,8 @@ fun DetailPromoScreen(
     var tanggalSelesai by remember { mutableStateOf("") }
     var jenisPromo by remember { mutableStateOf("") }
     var bannerUrl by remember { mutableStateOf<String?>(null) }
+    var tanggalMulaiApi by remember { mutableStateOf("") }
+    var tanggalSelesaiApi by remember { mutableStateOf("") }
 
     var nama by remember { mutableStateOf("") }
 
@@ -86,6 +89,8 @@ fun DetailPromoScreen(
             promo?.let {
                 judul = it.judul
                 deskripsi = it.deskripsi ?: ""
+                tanggalMulaiApi = it.tanggalMulai ?: ""
+                tanggalSelesaiApi = it.tanggalSelesai ?: ""
                 tanggalMulai = it.tanggalMulai?.let(::formatFromApi) ?: ""
                 tanggalSelesai = it.tanggalSelesai?.let(::formatFromApi) ?: ""
                 jenisPromo = it.jenisPromo
@@ -133,7 +138,11 @@ fun DetailPromoScreen(
                         .clickable { imagePicker.launch("image/*") }
                 ) {
                     AsyncImage(
-                        model = bannerUrl,
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(bannerUrl)
+                            .crossfade(true)
+                            .setParameter("time", System.currentTimeMillis())
+                            .build(),
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
@@ -262,8 +271,8 @@ fun DetailPromoScreen(
                                 promo = promo!!.copy(
                                     judul = judul,
                                     deskripsi = deskripsi,
-                                    tanggalMulai = tanggalMulai,
-                                    tanggalSelesai = tanggalSelesai,
+                                    tanggalMulai = tanggalMulaiApi,
+                                    tanggalSelesai = tanggalSelesaiApi,
                                     jenisPromo = jenisPromo,
                                     bannerUrl = bannerUrl
                                 )
@@ -312,6 +321,9 @@ fun DetailPromoScreen(
                         if (start != null && end != null) {
                             tanggalMulai = formatDate(start)
                             tanggalSelesai = formatDate(end)
+
+                            tanggalMulaiApi = formatDateForApi(start)
+                            tanggalSelesaiApi = formatDateForApi(end)
                         }
                         showDatePicker = false
                     }) {
@@ -346,4 +358,8 @@ private fun formatFromApi(date: String): String {
     } catch (e: Exception) {
         date
     }
+}
+private fun formatDateForApi(millis: Long): String {
+    val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    return formatter.format(Date(millis))
 }
