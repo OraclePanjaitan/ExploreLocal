@@ -23,6 +23,9 @@ import com.example.explorelocal.ui.screen.umkm.UmkmListScreen
 import com.example.explorelocal.viewmodel.AuthViewModel
 import com.example.explorelocal.viewmodel.UmkmState
 import com.example.explorelocal.viewmodel.UmkmViewModel
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.example.explorelocal.ui.screen.promo.DetailPromoScreen
 
 @Composable
 fun AppNavigation() {
@@ -73,6 +76,21 @@ fun AppNavigation() {
         }
         composable("promo") {
             PromoListScreen(navController)
+        }
+        composable(
+            route = "promo_detail/{promoId}",
+            arguments = listOf(
+                navArgument("promoId") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val promoId = backStackEntry.arguments?.getString("promoId")!!
+
+            DetailPromoScreen(
+                promoId = promoId,
+                navController = navController
+            )
         }
         composable("add_promo") {
             val umkmViewModel: UmkmViewModel = viewModel()

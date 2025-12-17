@@ -9,6 +9,7 @@ import com.example.explorelocal.data.repository.PromoRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import com.example.explorelocal.data.repository.UmkmRepository
 
 /* -------------------- PROMO STATE -------------------- */
 
@@ -25,6 +26,11 @@ sealed class PromoState {
 /* -------------------- VIEWMODEL -------------------- */
 
 class PromoViewModel : ViewModel() {
+
+    private val umkmRepository = UmkmRepository()
+
+    private val _umkmNama = MutableStateFlow<String?>(null)
+    val umkmNama: StateFlow<String?> = _umkmNama
 
     private val repository = PromoRepository()
 
@@ -155,6 +161,15 @@ class PromoViewModel : ViewModel() {
             } else {
                 _promoState.value =
                     PromoState.Error("Gagal menghapus promo")
+            }
+        }
+    }
+
+    fun loadUmkmName(umkmId: String) {
+        viewModelScope.launch {
+            val result = umkmRepository.getUmkmById(umkmId)
+            if (result.isSuccess) {
+                _umkmNama.value = result.getOrNull()?.nama
             }
         }
     }

@@ -64,4 +64,21 @@ class UmkmRepository {
             Result.failure(e)
         }
     }
+
+    suspend fun getUmkmById(umkmId: String): Result<Umkm> {
+        return try {
+            val response = client.from("umkm")
+                .select {
+                    filter {
+                        eq("id", umkmId)
+                    }
+                }
+
+            val umkm = response.decodeSingle<Umkm>()
+            Result.success(umkm)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

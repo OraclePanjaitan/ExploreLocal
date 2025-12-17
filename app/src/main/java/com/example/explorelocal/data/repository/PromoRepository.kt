@@ -22,7 +22,7 @@ class PromoRepository {
                 ?.use { it.readBytes() }
                 ?: return Result.failure(Exception("Gagal membaca file"))
 
-            val fileName = "banner_${UUID.randomUUID()}.jpg" // ❗ TANPA FOLDER
+            val fileName = "banner_${UUID.randomUUID()}.jpg"
 
             bucket.upload(
                 path = fileName,
