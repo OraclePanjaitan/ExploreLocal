@@ -104,8 +104,12 @@ class AuthRepository {
      */
     fun getToken(context: Context): String? {
         return try {
-            client.auth.currentAccessTokenOrNull()  // ✅ Apakah ini return token?
+            val sharedPref = SharedPreferenceHelper(context)
+            val savedToken = sharedPref.getStringData("accessToken")
+            android.util.Log.d("AuthRepository", "Retrieved token from SharedPreferences: ${savedToken?.take(10)}...")
+            savedToken
         } catch (e: Exception) {
+            android.util.Log.e("AuthRepository", "Error getting token: ${e.message}")
             null
         }
     }
@@ -116,5 +120,32 @@ class AuthRepository {
     fun clearToken(context: Context) {
         val sharedPref = SharedPreferenceHelper(context)
         sharedPref.clearPreferences()
+    }
+
+    suspend fun isUserLoggedIn(context: Context): Result<Boolean> {
+        return try {
+            // Cek token dari SharedPreferences
+            val savedToken = getToken(context)
+
+            if (savedToken.isNullOrEmpty()) {
+                android.util.Log.d("AuthRepository", "No saved token found")
+                Result.success(false)
+            } else {
+                // Verifikasi token masih valid dengan retrieve user
+                val userResult = retrieveCurrentUser()
+
+                if (userResult.isSuccess) {
+                    android.util.Log.d("AuthRepository", "User session valid")
+                    Result.success(true)
+                } else {
+                    android.util.Log.d("AuthRepository", "Token expired, clearing...")
+                    clearToken(context)
+                    Result.success(false)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("AuthRepository", "Error checking login: ${e.message}")
+            Result.success(false)
+        }
     }
 }

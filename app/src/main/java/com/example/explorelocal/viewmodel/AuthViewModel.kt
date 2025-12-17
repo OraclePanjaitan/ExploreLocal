@@ -22,6 +22,9 @@ class AuthViewModel : ViewModel() {
     private val _userRole = MutableStateFlow<String?>(null)
     val userRole: StateFlow<String?> = _userRole
 
+    private val _isRoleLoaded = MutableStateFlow(false)
+    val isRoleLoaded: StateFlow<Boolean> = _isRoleLoaded
+
 
 
     fun signUp(
@@ -68,17 +71,15 @@ class AuthViewModel : ViewModel() {
 
     fun logout(context: Context) {
         viewModelScope.launch {
-            _userState.value = UserState.Loading
-
-            val result = authRepository.logout()  // ✅ Pakai repository
-
-            if (result.isSuccess) {
-                authRepository.clearToken(context)
+            try {
+                authRepository.logout()
+                authRepository.clearToken(context)  // ✅ Clear token
                 _userState.value = UserState.LoggedOut
-            } else {
-                _userState.value = UserState.Error(
-                    result.exceptionOrNull()?.message ?: "Logout gagal"
-                )
+                _userRole.value = null
+                _isRoleLoaded.value = false  // ✅ Reset flag
+                android.util.Log.d("AuthViewModel", "Logout success, token cleared")
+            } catch (e: Exception) {
+                _userState.value = UserState.Error(e.message ?: "Logout gagal")
             }
         }
     }
@@ -86,14 +87,13 @@ class AuthViewModel : ViewModel() {
     fun isUserLoggedIn(context: Context) {
         viewModelScope.launch {
             _userState.value = UserState.Loading
+            _isRoleLoaded.value = false
 
             try {
-                val token = authRepository.getToken(context)
+                val loginResult = authRepository.isUserLoggedIn(context)
 
-                if (token.isNullOrEmpty()) {
-                    _userState.value = UserState.LoggedOut
-                } else {
-                    // Retrieve user dan refresh session
+                if (loginResult.isSuccess && loginResult.getOrNull() == true) {
+
                     val userResult = authRepository.retrieveCurrentUser()
 
                     if (userResult.isSuccess) {
@@ -101,15 +101,26 @@ class AuthViewModel : ViewModel() {
                         authRepository.saveToken(context)
 
                         _userState.value = UserState.LoggedIn(userResult.getOrNull())
+
+                        android.util.Log.d("AuthViewModel", "User logged in, loading role...")
+
+                        // Load role
+                        loadUserRole()
                     } else {
-                        // Token expired atau invalid
                         authRepository.clearToken(context)
                         _userState.value = UserState.LoggedOut
+                        _isRoleLoaded.value = true
                     }
+                } else {
+                    // User not logged in
+                    _userState.value = UserState.LoggedOut
+                    _isRoleLoaded.value = true
                 }
             } catch (e: Exception) {
+                android.util.Log.e("AuthViewModel", "Error checking login: ${e.message}")
                 authRepository.clearToken(context)
                 _userState.value = UserState.LoggedOut
+                _isRoleLoaded.value = true
             }
         }
     }
@@ -130,13 +141,21 @@ class AuthViewModel : ViewModel() {
 
     fun loadUserRole() {
         viewModelScope.launch {
-            val result = userRepository.getUserRole()
-            if (result.isSuccess) {
-                _userRole.value = result.getOrNull()
+            try {
+                val result = userRepository.getUserRole()
+                if (result.isSuccess) {
+                    _userRole.value = result.getOrNull()
+                    android.util.Log.d("AuthViewModel", "Role loaded: ${_userRole.value}")
+                } else {
+                    android.util.Log.e("AuthViewModel", "Failed to load role: ${result.exceptionOrNull()?.message}")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("AuthViewModel", "Error loading role: ${e.message}")
+            } finally {
+                _isRoleLoaded.value = true
             }
         }
     }
-
     /**
      * Login dengan validasi role
      */
@@ -144,12 +163,12 @@ class AuthViewModel : ViewModel() {
         context: Context,
         userEmail: String,
         userPassword: String,
-        expectedRole: String  // ✅ Role yang dipilih user di OnboardingRole
+        expectedRole: String
     ) {
         viewModelScope.launch {
             _userState.value = UserState.Loading
 
-            // 1. Login dulu
+            // Login user
             val loginResult = authRepository.login(userEmail, userPassword)
 
             if (loginResult.isFailure) {
@@ -159,11 +178,14 @@ class AuthViewModel : ViewModel() {
                 return@launch
             }
 
-            // 2. Login berhasil, cek role di database
+            // ✅ TAMBAHKAN: Save token setelah login berhasil
+            authRepository.saveToken(context)
+            android.util.Log.d("AuthViewModel", "Token saved after login")
+
+            // Check role
             val roleResult = userRepository.getUserRole()
 
             if (roleResult.isFailure) {
-                // User belum punya role (kemungkinan akun baru), set role sesuai pilihan
                 android.util.Log.d("AuthViewModel", "No role found, setting to: $expectedRole")
                 val setRoleResult = userRepository.setUserRole(expectedRole)
 
@@ -176,13 +198,13 @@ class AuthViewModel : ViewModel() {
                 return@launch
             }
 
-            // 3. Role ada, validasi apakah sesuai dengan pilihan
             val actualRole = roleResult.getOrNull()
             android.util.Log.d("AuthViewModel", "Expected: $expectedRole, Actual: $actualRole")
 
             if (actualRole != expectedRole) {
-                // ❌ Role tidak sesuai
-                authRepository.logout()  // Logout otomatis
+                authRepository.logout()
+                // ✅ TAMBAHKAN: Clear token juga
+                authRepository.clearToken(context)
 
                 val errorMessage = when (actualRole) {
                     "owner" -> "Akun Anda terdaftar sebagai Pemilik UMKM. Silakan pilih menu UMKM untuk login."
@@ -192,11 +214,9 @@ class AuthViewModel : ViewModel() {
 
                 _userState.value = UserState.Error(errorMessage)
             } else {
-                // ✅ Role sesuai
                 _userRole.value = actualRole
                 _userState.value = UserState.Success("Login berhasil!")
             }
         }
     }
-
 }

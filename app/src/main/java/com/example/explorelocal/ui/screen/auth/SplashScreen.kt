@@ -41,6 +41,7 @@ fun SplashScreen(
 ) {
     val context = LocalContext.current
     val userState by viewModel.userState.collectAsState()
+    val isRoleLoaded by viewModel.isRoleLoaded.collectAsState()
     var showButton by remember { mutableStateOf(false) }
 
     // Check login status
@@ -51,17 +52,23 @@ fun SplashScreen(
     }
 
     // Auto navigate jika sudah login
-    LaunchedEffect(userState) {
-        when(userState) {
-            is UserState.LoggedIn -> {
-                delay(500)
-                navController.navigate("umkm_list") {
-                    popUpTo("splash") { inclusive = true }
+    LaunchedEffect(userState, isRoleLoaded) {
+        if (isRoleLoaded) {
+            when (val state = userState) {
+                is UserState.LoggedIn -> {
+                    delay(500)
+                    android.util.Log.d("SplashScreen", "Navigating to umkm_list with role loaded")
+                    navController.navigate("umkm_list") {
+                        popUpTo("splash") { inclusive = true }
+                    }
+                }
+                else -> {
+
                 }
             }
-            else -> { }
         }
     }
+
 
     Column(
         modifier = Modifier
@@ -139,11 +146,27 @@ fun SplashScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             // Button Mulai
-            if (showButton || userState is UserState.LoggedOut || userState is UserState.Error) {
+            if (showButton) {
                 Button(
                     onClick = {
-                        navController.navigate("onboarding1") {
-                            popUpTo("splash") { inclusive = true }
+                        when (val state = userState) {
+                            is UserState.LoggedIn -> {
+                                navController.navigate("umkm_list") {
+                                    popUpTo("splash") { inclusive = true }
+                                }
+                            }
+                            is UserState.LoggedOut,
+                            is UserState.Error,
+                            UserState.Loading -> {
+                                navController.navigate("onboarding1") {
+                                    popUpTo("splash") { inclusive = true }
+                                }
+                            }
+                            is UserState.Success -> {
+                                navController.navigate("onboarding1") {
+                                    popUpTo("splash") { inclusive = true }
+                                }
+                            }
                         }
                     },
                     modifier = Modifier
