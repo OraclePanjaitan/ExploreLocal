@@ -11,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -30,6 +29,9 @@ fun PromoListScreen(
     navController: NavController,
     promoViewModel: PromoViewModel = viewModel()
 ) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var selectedPromoId by remember { mutableStateOf<String?>(null) }
+
     val state by promoViewModel.promoState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
 
@@ -136,7 +138,16 @@ fun PromoListScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(promos) { promo ->
-                            PromoCard(promo)
+                            PromoCard(
+                                promo = promo,
+                                onClick = {
+                                    navController.navigate("promo_detail/${promo.id}")
+                                },
+                                onDelete = {
+                                    selectedPromoId = promo.id
+                                    showDeleteDialog = true
+                                }
+                            )
                         }
                     }
                 }
@@ -151,5 +162,36 @@ fun PromoListScreen(
                 else -> {}
             }
         }
+    }
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = {
+                Text("Hapus Promo")
+            },
+            text = {
+                Text("Apakah kamu yakin ingin menghapus promo ini?")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        selectedPromoId?.let {
+                            promoViewModel.deletePromo(it)
+                        }
+                        showDeleteDialog = false
+                    }
+                ) {
+                    Text(
+                        "Hapus",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Batal")
+                }
+            }
+        )
     }
 }
