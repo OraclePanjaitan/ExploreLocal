@@ -38,6 +38,7 @@ import com.example.explorelocal.data.model.Umkm
 import com.example.explorelocal.navigation.AppNavigation
 import com.example.explorelocal.navigation.BottomNavItem
 import com.example.explorelocal.ui.theme.PrimaryPurple
+import com.example.explorelocal.viewmodel.AuthViewModel
 import com.example.explorelocal.viewmodel.UmkmState
 import com.example.explorelocal.viewmodel.UmkmViewModel
 
@@ -45,11 +46,13 @@ import com.example.explorelocal.viewmodel.UmkmViewModel
 @Composable
 fun UmkmListScreen(
     navController: NavController,
-    viewModel: UmkmViewModel = viewModel()
+    viewModel: UmkmViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val umkmState by viewModel.umkmState.collectAsState()
     val uploadedImageUrl by viewModel.uploadedImageUrl.collectAsState()
+    val userRole by authViewModel.userRole.collectAsState()
 
     var showAddDialog by remember { mutableStateOf(false) }
     var nama by remember { mutableStateOf("") }
@@ -75,6 +78,7 @@ fun UmkmListScreen(
     }
 
     LaunchedEffect(Unit) {
+        authViewModel.loadUserRole()
         viewModel.loadAllUmkm()
     }
 
@@ -270,15 +274,17 @@ fun UmkmListScreen(
             }
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showAddDialog = true },
-                containerColor = PrimaryPurple
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Tambah UMKM",
-                    tint = Color.White
-                )
+            if (userRole == "owner") {
+                FloatingActionButton(
+                    onClick = { showAddDialog = true },
+                    containerColor = PrimaryPurple
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Tambah UMKM",
+                        tint = Color.White
+                    )
+                }
             }
         }
     ) { paddingValues ->

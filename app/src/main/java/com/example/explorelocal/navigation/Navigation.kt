@@ -56,14 +56,19 @@ fun AppNavigation() {
             OnboardingRole(navController)
         }
 
-        composable("login") {
-            LoginScreen(navController, authViewModel)
+        composable("login?role={role}") { backStackEntry ->
+            val role = backStackEntry.arguments?.getString("role")
+            LoginScreen(navController, authViewModel, role)
         }
-        composable("register") {
-            RegisterScreen(navController, authViewModel)
+        composable("register?role={role}") { backStackEntry ->
+            val role = backStackEntry.arguments?.getString("role")
+            RegisterScreen(navController, authViewModel, role)
         }
         composable("umkm_list") {
-            UmkmListScreen(navController)
+            UmkmListScreen(
+                navController = navController,
+                authViewModel = authViewModel
+            )
         }
         composable("umkm_detail/{umkmId}") { backStackEntry ->
             val umkmId = backStackEntry.arguments?.getString("umkmId")
