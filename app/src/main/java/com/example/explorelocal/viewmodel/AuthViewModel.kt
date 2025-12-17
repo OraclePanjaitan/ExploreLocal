@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.explorelocal.data.model.UserState
 import com.example.explorelocal.data.repository.AuthRepository
+import com.example.explorelocal.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,9 +14,15 @@ import kotlinx.coroutines.launch
 class AuthViewModel : ViewModel() {
 
     private val authRepository = AuthRepository()
+    private val userRepository = UserRepository()
 
     private val _userState = MutableStateFlow<UserState>(UserState.Loading)
     val userState: StateFlow<UserState> = _userState.asStateFlow()
+
+    private val _userRole = MutableStateFlow<String?>(null)
+    val userRole: StateFlow<String?> = _userRole
+
+
 
     fun signUp(
         context: Context,
@@ -106,4 +113,90 @@ class AuthViewModel : ViewModel() {
             }
         }
     }
+
+    fun setUserRole(context: Context, role: String) {
+        viewModelScope.launch {
+            try {
+                val result = userRepository.setUserRole(role)
+                if (result.isSuccess) {
+                    _userRole.value = role
+                    android.util.Log.d("AuthViewModel", "Role set to: $role")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("AuthViewModel", "Error setting role: ${e.message}")
+            }
+        }
+    }
+
+    fun loadUserRole() {
+        viewModelScope.launch {
+            val result = userRepository.getUserRole()
+            if (result.isSuccess) {
+                _userRole.value = result.getOrNull()
+            }
+        }
+    }
+
+    /**
+     * Login dengan validasi role
+     */
+    fun loginWithRoleValidation(
+        context: Context,
+        userEmail: String,
+        userPassword: String,
+        expectedRole: String  // ✅ Role yang dipilih user di OnboardingRole
+    ) {
+        viewModelScope.launch {
+            _userState.value = UserState.Loading
+
+            // 1. Login dulu
+            val loginResult = authRepository.login(userEmail, userPassword)
+
+            if (loginResult.isFailure) {
+                _userState.value = UserState.Error(
+                    loginResult.exceptionOrNull()?.message ?: "Login gagal"
+                )
+                return@launch
+            }
+
+            // 2. Login berhasil, cek role di database
+            val roleResult = userRepository.getUserRole()
+
+            if (roleResult.isFailure) {
+                // User belum punya role (kemungkinan akun baru), set role sesuai pilihan
+                android.util.Log.d("AuthViewModel", "No role found, setting to: $expectedRole")
+                val setRoleResult = userRepository.setUserRole(expectedRole)
+
+                if (setRoleResult.isSuccess) {
+                    _userRole.value = expectedRole
+                    _userState.value = UserState.Success("Login berhasil!")
+                } else {
+                    _userState.value = UserState.Error("Gagal menyimpan role")
+                }
+                return@launch
+            }
+
+            // 3. Role ada, validasi apakah sesuai dengan pilihan
+            val actualRole = roleResult.getOrNull()
+            android.util.Log.d("AuthViewModel", "Expected: $expectedRole, Actual: $actualRole")
+
+            if (actualRole != expectedRole) {
+                // ❌ Role tidak sesuai
+                authRepository.logout()  // Logout otomatis
+
+                val errorMessage = when (actualRole) {
+                    "owner" -> "Akun Anda terdaftar sebagai Pemilik UMKM. Silakan pilih menu UMKM untuk login."
+                    "user" -> "Akun Anda terdaftar sebagai Penjelajah. Silakan pilih menu Penjelajah untuk login."
+                    else -> "Role akun tidak valid"
+                }
+
+                _userState.value = UserState.Error(errorMessage)
+            } else {
+                // ✅ Role sesuai
+                _userRole.value = actualRole
+                _userState.value = UserState.Success("Login berhasil!")
+            }
+        }
+    }
+
 }

@@ -38,7 +38,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun LoginScreen(
     navController: NavController,
-    viewModel: AuthViewModel = viewModel()
+    viewModel: AuthViewModel = viewModel(),
+    selectedRole: String? = null
 ) {
     val context = LocalContext.current
     val userState by viewModel.userState.collectAsState()
@@ -49,18 +50,10 @@ fun LoginScreen(
     var errorMessage by remember { mutableStateOf("") }
 
 
-    LaunchedEffect(Unit) {
-        viewModel.isUserLoggedIn(context)
-    }
 
     // Observe state changes
     LaunchedEffect(userState) {
         when(userState) {
-            is UserState.LoggedIn -> {
-                navController.navigate("umkm_list") {
-                    popUpTo("login") { inclusive = true }
-                }
-            }
             is UserState.Success -> {
                 delay(500)
                 navController.navigate("umkm_list") {
@@ -94,6 +87,19 @@ fun LoginScreen(
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
+            selectedRole?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = when(it) {
+                        "owner" -> "Login sebagai Pemilik UMKM"
+                        "user" -> "Login sebagai Penjelajah"
+                        else -> ""
+                    },
+                    fontSize = 14.sp,
+                    color = PrimaryPurple,
+                    fontWeight = FontWeight.Medium
+                )
+            }
 
             Spacer(modifier = Modifier.height(40.dp))
 
@@ -205,7 +211,17 @@ fun LoginScreen(
             // Button Masuk
             Button(
                 onClick = {
-                    viewModel.login(context, userEmail, userPassword)
+                    if (selectedRole != null) {
+                        viewModel.loginWithRoleValidation(
+                            context = context,
+                            userEmail = userEmail,
+                            userPassword = userPassword,
+                            expectedRole = selectedRole
+                        )
+                    } else {
+                        // Fallback jika tidak ada role (tidak seharusnya terjadi)
+                        viewModel.login(context, userEmail, userPassword)
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -294,22 +310,31 @@ fun LoginScreen(
                         start = offset,
                         end = offset
                     ).firstOrNull()?.let {
-                        navController.navigate("register")
+                        // Pass role ke register screen juga
+                        navController.navigate("register?role=$selectedRole")
                     }
                 },
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
-
             // Error Message
             if (errorMessage.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = errorMessage,
-                    color = MaterialTheme.colorScheme.error,
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFFFEBEE)
+                    )
+                ) {
+                    Text(
+                        text = errorMessage,
+                        color = Color(0xFFD32F2F),
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp)
+                    )
+                }
             }
         }
     }
