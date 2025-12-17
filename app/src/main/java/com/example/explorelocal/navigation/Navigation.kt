@@ -62,7 +62,10 @@ fun AppNavigation() {
             RegisterScreen(navController, authViewModel, role)
         }
         composable("umkm_list") {
-            UmkmListScreen(navController)
+            UmkmListScreen(
+                navController = navController,
+                authViewModel = authViewModel
+            )
         }
         composable("umkm_detail/{umkmId}") { backStackEntry ->
             val umkmId = backStackEntry.arguments?.getString("umkmId")
