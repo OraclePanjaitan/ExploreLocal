@@ -22,15 +22,13 @@ import com.example.explorelocal.R
 fun OnboardingRole(
     navController: NavController
 ) {
-
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF2E4FF)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-        Spacer(modifier = Modifier.height(70.dp))   // lebih ke bawah
+        Spacer(modifier = Modifier.height(70.dp))
 
         Image(
             painter = painterResource(id = R.drawable.role),
@@ -101,9 +99,9 @@ fun OnboardingRole(
                 .padding(horizontal = 32.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             val containerHeight = 200.dp
 
+            // ✅ UMKM (Owner role)
             Column(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -118,11 +116,15 @@ fun OnboardingRole(
                         modifier = Modifier
                             .width(150.dp)
                             .height(150.dp)
-                            .clickable { navController.navigate("login") }
+                            .clickable {
+                                // Navigate dengan parameter role=owner
+                                navController.navigate("login?role=owner")
+                            }
                     )
                 }
             }
 
+            // ✅ Penjelajah (User role)
             Column(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -137,7 +139,10 @@ fun OnboardingRole(
                         modifier = Modifier
                             .width(180.dp)
                             .height(200.dp)
-                            .clickable { navController.navigate("login") }
+                            .clickable {
+                                // Navigate dengan parameter role=user
+                                navController.navigate("login?role=user")
+                            }
                     )
                 }
             }

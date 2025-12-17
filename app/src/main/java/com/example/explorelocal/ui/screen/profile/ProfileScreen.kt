@@ -52,7 +52,7 @@ fun ProfileScreen(
     LaunchedEffect(userState) {
         when(userState) {
             is UserState.LoggedOut -> {
-                navController.navigate("login") {
+                navController.navigate("splash") {
                     popUpTo(0) { inclusive = true }
                 }
             }

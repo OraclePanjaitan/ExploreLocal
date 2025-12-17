@@ -38,7 +38,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun RegisterScreen(
     navController: NavController,
-    viewModel: AuthViewModel = viewModel()
+    viewModel: AuthViewModel = viewModel(),
+    selectedRole: String? = null
 ) {
     val context = LocalContext.current
     val userState by viewModel.userState.collectAsState()
@@ -53,9 +54,13 @@ fun RegisterScreen(
     LaunchedEffect(userState) {
         when(userState) {
             is UserState.Success -> {
-                successMessage = (userState as UserState.Success).message
+                if (selectedRole != null) {
+                    viewModel.setUserRole(context, selectedRole)
+                }
+
+                successMessage = "Registrasi berhasil! Silakan login."
                 delay(1500)
-                navController.navigate("login") {
+                navController.navigate("login?role=$selectedRole") {
                     popUpTo("register") { inclusive = true }
                 }
             }
