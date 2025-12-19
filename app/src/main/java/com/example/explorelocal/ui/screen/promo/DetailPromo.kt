@@ -56,8 +56,6 @@ fun DetailPromoScreen(
     var tanggalMulaiApi by remember { mutableStateOf("") }
     var tanggalSelesaiApi by remember { mutableStateOf("") }
 
-    var nama by remember { mutableStateOf("") }
-
     var showDatePicker by remember { mutableStateOf(false) }
     val dateRangePickerState = rememberDateRangePickerState()
 
